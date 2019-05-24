@@ -28,7 +28,8 @@ func (p *Piece) Draw(screen *tl.Screen) {
 		}
 		screen.RenderCell(p.piece.X()+p.offsetX+1, p.piece.Y()+p.offsetY-i, &tl.Cell{
 			Bg: colors[p.piece.Tiles()[i]],
-			Ch: ' ',
+			Fg: tl.ColorBlack,
+			Ch: '·',
 		})
 	}
 }

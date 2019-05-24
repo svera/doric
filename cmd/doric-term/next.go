@@ -28,7 +28,8 @@ func (n *Next) Draw(screen *tl.Screen) {
 	for i := range n.piece.Tiles() {
 		screen.RenderCell(n.offsetX, n.offsetY-i, &tl.Cell{
 			Bg: colors[n.piece.Tiles()[i]],
-			Ch: ' ',
+			Fg: tl.ColorBlack,
+			Ch: '·',
 		})
 	}
 }

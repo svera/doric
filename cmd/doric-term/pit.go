@@ -63,8 +63,8 @@ func (p *Pit) Draw(screen *tl.Screen) {
 			} else {
 				screen.RenderCell(p.offsetX+x+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.pit.Cell(x, y)],
-					Fg: tl.ColorWhite,
-					Ch: ' ',
+					Fg: tl.ColorBlack,
+					Ch: '·',
 				})
 			}
 		}
