@@ -20,17 +20,15 @@ type Player struct {
 	points   int
 	combo    int
 	slowdown int
-	blocks   int
+	paused   bool
 }
 
 // NewPlayer returns a new Player instance
 func NewPlayer(pit *Pit) *Player {
 	return &Player{
-		pit:      pit,
-		combo:    1,
-		slowdown: 8,
-		current:  NewPiece(pit),
-		next:     NewPiece(pit),
+		pit:     pit,
+		current: NewPiece(pit),
+		next:    NewPiece(pit),
 	}
 }
 
@@ -54,11 +52,20 @@ func (p *Player) Pit() *Pit {
 	return p.pit
 }
 
-func (p *Player) Play(events chan<- *Event) {
+// Pause stops game until executed again
+func (p *Player) Pause() {
+	p.paused = !p.paused
+}
+
+func (p *Player) Play(events chan<- int) {
+	p.Reset()
 	ticker := time.NewTicker(250 * time.Millisecond)
-	go func(events chan<- *Event) {
+	go func(events chan<- int) {
 		ticks := 0
 		for range ticker.C {
+			if p.paused {
+				continue
+			}
 			if ticks != p.slowdown {
 				ticks++
 				continue
@@ -71,7 +78,7 @@ func (p *Player) Play(events chan<- *Event) {
 					p.pit.Settle()
 					p.points += removed * p.combo * pointsPerTile
 					p.combo++
-					events <- NewEvent(Scored, struct{}{})
+					events <- Scored
 					removed = p.pit.CheckLines()
 					if p.slowdown > 1 {
 						p.slowdown--
@@ -82,10 +89,20 @@ func (p *Player) Play(events chan<- *Event) {
 				p.next.Renew()
 				if p.pit.Cell(3, 0) != Empty {
 					ticker.Stop()
-					events <- NewEvent(Finished, struct{}{})
+					events <- Finished
 					return
 				}
 			}
 		}
 	}(events)
+}
+
+func (p *Player) Reset() {
+	p.pit.Reset()
+	p.combo = 1
+	p.slowdown = 8
+	p.points = 0
+	p.current.Reset()
+	p.next.Reset()
+	p.paused = false
 }

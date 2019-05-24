@@ -13,18 +13,25 @@ type Piece struct {
 }
 
 func NewPiece(pit *Pit) *Piece {
-	tiles := make([]int, 3)
-	r := rand.New(source)
-
-	tiles[0] = r.Intn(maxTile) + 1
-	tiles[1] = r.Intn(maxTile) + 1
-	tiles[2] = r.Intn(maxTile) + 1
-
 	return &Piece{
-		tiles,
+		make([]int, 3),
 		Coords{3, 0},
 		pit,
 	}
+}
+
+func (p *Piece) randomizeTiles() {
+	r := rand.New(source)
+
+	p.tiles[0] = r.Intn(maxTile) + 1
+	p.tiles[1] = r.Intn(maxTile) + 1
+	p.tiles[2] = r.Intn(maxTile) + 1
+}
+
+func (p *Piece) Reset() {
+	p.randomizeTiles()
+	p.x = 3
+	p.y = 0
 }
 
 // X return the position of the piece in the X (horizontal) axis

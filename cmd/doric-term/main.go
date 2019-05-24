@@ -13,7 +13,7 @@ const (
 )
 
 var player *columns.Player
-var events chan *columns.Event
+var events chan int
 var game *tl.Game
 var mainLevel *tl.BaseLevel
 var gameOverLevel *tl.BaseLevel
@@ -28,7 +28,7 @@ func main() {
 	game.Screen().SetFps(60)
 	pit := columns.NewPit(13, 6)
 	player = columns.NewPlayer(pit)
-	events = make(chan *columns.Event)
+	events = make(chan int)
 	score = tl.NewText(offsetX+10, offsetY, fmt.Sprintf("%d", player.Score()), tl.ColorWhite, tl.ColorBlack)
 	setUpMainLevel()
 	setUpGameOverScreen(pitEntity, nextPieceEntity)
@@ -76,11 +76,11 @@ func startGame() {
 		for {
 			select {
 			case ev := <-events:
-				if ev.Name() == columns.Finished {
+				if ev == columns.Finished {
 					game.Screen().SetLevel(gameOverLevel)
 					return
 				}
-				if ev.Name() == columns.Scored {
+				if ev == columns.Scored {
 					score.SetText(fmt.Sprintf("%d", player.Score()))
 				}
 			}

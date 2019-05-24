@@ -23,10 +23,19 @@ func NewPit(rows, cols int) *Pit {
 	return &p
 }
 
+func (p *Pit) Reset() {
+	for y, row := range p.cells {
+		for x := range row {
+			p.cells[y][x] = Empty
+		}
+	}
+}
+
 func (p *Pit) CheckLines() int {
 	remove := map[Coords]struct{}{}
 	p.checkHorizontalLines(remove)
 	p.checkVerticalLines(remove)
+	p.checkDiagonalLines(remove)
 	for coords := range remove {
 		// Cells with negative values are cells with tiles to be removed
 		p.cells[coords.y][coords.x] = Remove
@@ -66,6 +75,58 @@ func (p *Pit) checkVerticalLines(remove map[Coords]struct{}) {
 			}
 			y--
 		}
+	}
+}
+
+func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
+	for row := 2; row < p.height; row++ {
+		x := 0
+		y := row
+		p.loopDiagBottomLeft(x, y, remove)
+		p.loopDiagBottomRight(p.width-1, y, remove)
+	}
+
+	for col := 1; col < p.width-2; col++ {
+		x := col
+		y := p.height - 1
+		p.loopDiagBottomLeft(x, y, remove)
+		p.loopDiagBottomRight(p.width-1, y, remove)
+	}
+}
+
+// Checks for tiles to be remove in diagonal / lines
+func (p *Pit) loopDiagBottomLeft(x, y int, remove map[Coords]struct{}) {
+	for x < p.width-2 && y > 1 {
+		if p.cells[y][x] == Empty {
+			x++
+			y--
+			continue
+		}
+		if p.cells[y][x] == p.cells[y-1][x+1] && p.cells[y-1][x+1] == p.cells[y-2][x+2] {
+			remove[Coords{x, y}] = struct{}{}
+			remove[Coords{x + 1, y - 1}] = struct{}{}
+			remove[Coords{x + 2, y - 2}] = struct{}{}
+		}
+		x++
+		y--
+	}
+}
+
+// Checks for tiles to be remove in diagonal \ lines
+func (p *Pit) loopDiagBottomRight(x, y int, remove map[Coords]struct{}) {
+	for x > 1 && y > 1 {
+		if p.cells[y][x] == Empty {
+			x--
+			y--
+			continue
+		}
+		if p.cells[y][x] == p.cells[y-1][x-1] && p.cells[y-1][x-1] == p.cells[y-2][x-2] {
+			remove[Coords{x, y}] = struct{}{}
+			remove[Coords{x - 1, y - 1}] = struct{}{}
+			remove[Coords{x - 2, y - 2}] = struct{}{}
+		}
+		x--
+		y--
 	}
 }
 

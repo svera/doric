@@ -5,6 +5,8 @@ import (
 	"github.com/svera/doric/pkg/columns"
 )
 
+// Piece represents the piece currently falling in the pit,
+// as shown on screen
 type Piece struct {
 	*tl.Entity
 	piece   *columns.Piece
@@ -12,6 +14,7 @@ type Piece struct {
 	offsetY int
 }
 
+// NewPiece returns a new Piece instance
 func NewPiece(p *columns.Piece, offsetX int, offsetY int) *Piece {
 	return &Piece{
 		Entity:  tl.NewEntity(p.X()+offsetX+1, p.Y()+offsetY, 1, 3),
@@ -21,6 +24,7 @@ func NewPiece(p *columns.Piece, offsetX int, offsetY int) *Piece {
 	}
 }
 
+// Draw draws the piece on screen, as required by Termloop's Drawable interface
 func (p *Piece) Draw(screen *tl.Screen) {
 	for i := range p.piece.Tiles() {
 		if i > p.piece.Y() {
@@ -34,6 +38,7 @@ func (p *Piece) Draw(screen *tl.Screen) {
 	}
 }
 
+// Tick handles events and moves the piece accosdingly if requested, as requested by Termloop's Drawable interface
 func (p *Piece) Tick(event tl.Event) {
 	if event.Type == tl.EventKey { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
