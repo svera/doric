@@ -5,3 +5,4 @@ import (
 )
 
 var colors = []tl.Attr{tl.ColorBlack, tl.ColorCyan, tl.ColorGreen, tl.ColorMagenta, tl.ColorRed, tl.ColorYellow, tl.ColorBlue}
+var chars = []rune{' ', '·', '-', '|', '#', '/', '\\'}

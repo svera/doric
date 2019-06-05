@@ -1,16 +1,19 @@
 package columns
 
+// values that represent empty or removable tiles in the pit
 const (
 	Remove = -1
 	Empty  = 0
 )
 
+// Pit represents the field of play, holding the tiles that are falling
 type Pit struct {
 	width  int
 	height int
 	cells  [][]int
 }
 
+// NewPit return a new Pit instance
 func NewPit(rows, cols int) *Pit {
 	p := Pit{
 		width:  cols,
@@ -23,6 +26,7 @@ func NewPit(rows, cols int) *Pit {
 	return &p
 }
 
+// Reset empties the pit
 func (p *Pit) Reset() {
 	for y, row := range p.cells {
 		for x := range row {
@@ -31,6 +35,8 @@ func (p *Pit) Reset() {
 	}
 }
 
+// CheckLines scans pit lines looking for tiles to be removed.
+// Tiles repeated in 3 or more consecutive positions horizontally, vertically or diagonally are to be removed.
 func (p *Pit) CheckLines() int {
 	remove := map[Coords]struct{}{}
 	p.checkHorizontalLines(remove)
@@ -79,75 +85,61 @@ func (p *Pit) checkVerticalLines(remove map[Coords]struct{}) {
 }
 
 func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
-	for row := 2; row < p.height; row++ {
+	for row := p.height - 1; row > 1; row-- {
+		// Checks for tiles to be removed in diagonal / lines
 		x := 0
 		y := row
-		p.loopDiagBottomLeft(x, y, remove)
-		p.loopDiagBottomRight(p.width-1, y, remove)
-	}
-
-	for col := 1; col < p.width-2; col++ {
-		x := col
-		y := p.height - 1
-		p.loopDiagBottomLeft(x, y, remove)
-		p.loopDiagBottomRight(p.width-1, y, remove)
-	}
-}
-
-// Checks for tiles to be remove in diagonal / lines
-func (p *Pit) loopDiagBottomLeft(x, y int, remove map[Coords]struct{}) {
-	for x < p.width-2 && y > 1 {
-		if p.cells[y][x] == Empty {
+		for x < p.width-2 && y > 1 {
+			if p.cells[y][x] == Empty {
+				x++
+				continue
+			}
+			if p.cells[y][x] == p.cells[y-1][x+1] && p.cells[y-1][x+1] == p.cells[y-2][x+2] {
+				remove[Coords{x, y}] = struct{}{}
+				remove[Coords{x + 1, y - 1}] = struct{}{}
+				remove[Coords{x + 2, y - 2}] = struct{}{}
+			}
 			x++
-			y--
-			continue
 		}
-		if p.cells[y][x] == p.cells[y-1][x+1] && p.cells[y-1][x+1] == p.cells[y-2][x+2] {
-			remove[Coords{x, y}] = struct{}{}
-			remove[Coords{x + 1, y - 1}] = struct{}{}
-			remove[Coords{x + 2, y - 2}] = struct{}{}
-		}
-		x++
-		y--
-	}
-}
-
-// Checks for tiles to be remove in diagonal \ lines
-func (p *Pit) loopDiagBottomRight(x, y int, remove map[Coords]struct{}) {
-	for x > 1 && y > 1 {
-		if p.cells[y][x] == Empty {
+		// Checks for tiles to be removed in diagonal \ lines
+		x = p.width - 1
+		y = row
+		for x > 1 && y > 1 {
+			if p.cells[y][x] == Empty {
+				x--
+				continue
+			}
+			if p.cells[y][x] == p.cells[y-1][x-1] && p.cells[y-1][x-1] == p.cells[y-2][x-2] {
+				remove[Coords{x, y}] = struct{}{}
+				remove[Coords{x - 1, y - 1}] = struct{}{}
+				remove[Coords{x - 2, y - 2}] = struct{}{}
+			}
 			x--
-			y--
-			continue
 		}
-		if p.cells[y][x] == p.cells[y-1][x-1] && p.cells[y-1][x-1] == p.cells[y-2][x-2] {
-			remove[Coords{x, y}] = struct{}{}
-			remove[Coords{x - 1, y - 1}] = struct{}{}
-			remove[Coords{x - 2, y - 2}] = struct{}{}
-		}
-		x--
-		y--
 	}
 }
 
+// Cell returns the passed coordinates cell value
 func (p *Pit) Cell(x, y int) int {
 	return p.cells[y][x]
 }
 
+// Width returns pit's width
 func (p *Pit) Width() int {
 	return p.width
 }
 
+// Height returns pit's height
 func (p *Pit) Height() int {
 	return p.height
 }
 
-// Settle move down all tiles which have empty cells below
+// Settle moves down all tiles which have empty cells below
 func (p *Pit) Settle() {
 	for x := 0; x < p.Width(); x++ {
 		tiles := []int{}
 		for y := p.Height() - 1; y >= 0; y-- {
-			// This cell contains a tile to be removed, do not put it in the slice of tiles to move settle
+			// This cell contains a tile to be removed, do not put it in the slice of tiles to settle
 			if p.cells[y][x] < 0 {
 				continue
 			}
@@ -167,6 +159,7 @@ func (p *Pit) Settle() {
 	}
 }
 
+// Consolidate put the values of the passed piece in the pit
 func (p *Pit) Consolidate(pc *Piece) {
 	for i, tile := range pc.Tiles() {
 		if pc.Y()-i < 0 {

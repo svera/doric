@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	tl "github.com/JoelOtter/termloop"
 	"github.com/svera/doric/pkg/columns"
 )
 
+// Pit represents a pit on screen following Termloop's Drawable interface
 type Pit struct {
 	*tl.Entity
 	pit     *columns.Pit
@@ -12,6 +16,7 @@ type Pit struct {
 	offsetY int
 }
 
+// NewPit returns a new pit instance
 func NewPit(p *columns.Pit, offsetX int, offsetY int) *Pit {
 	return &Pit{
 		Entity:  tl.NewEntity(offsetX, offsetY, p.Width(), p.Height()),
@@ -21,7 +26,15 @@ func NewPit(p *columns.Pit, offsetX int, offsetY int) *Pit {
 	}
 }
 
+// Draw draws pit on screen
 func (p *Pit) Draw(screen *tl.Screen) {
+	var x, y int
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("valor de la celda error: %d", p.pit.Cell(x, y))
+			os.Exit(1)
+		}
+	}()
 	// Pit bottom corners
 	screen.RenderCell(p.offsetX, p.offsetY+p.pit.Height(), &tl.Cell{
 		Bg: tl.ColorWhite,
@@ -32,8 +45,8 @@ func (p *Pit) Draw(screen *tl.Screen) {
 		Ch: ' ',
 	})
 
-	for y := 0; y < p.pit.Height(); y++ {
-		for x := 0; x < p.pit.Width(); x++ {
+	for y = 0; y < p.pit.Height(); y++ {
+		for x = 0; x < p.pit.Width(); x++ {
 			// Pit left border
 			if x == 0 {
 				screen.RenderCell(p.offsetX, p.offsetY+y, &tl.Cell{
@@ -55,16 +68,16 @@ func (p *Pit) Draw(screen *tl.Screen) {
 					Ch: ' ',
 				})
 			}
-			if p.pit.Cell(x, y) == columns.Empty {
+			if p.pit.Cell(x, y) > columns.Empty {
 				screen.RenderCell(p.offsetX+x+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.pit.Cell(x, y)],
-					Ch: ' ',
+					Fg: tl.ColorBlack,
+					Ch: chars[p.pit.Cell(x, y)],
 				})
 			} else {
 				screen.RenderCell(p.offsetX+x+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.pit.Cell(x, y)],
-					Fg: tl.ColorBlack,
-					Ch: '·',
+					Ch: ' ',
 				})
 			}
 		}

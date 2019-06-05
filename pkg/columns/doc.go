@@ -8,5 +8,5 @@
 // 		more other symbols to align, they too disappear and the cycle repeats. Occasionally, a special column with a
 // 		multicolor Magic Jewel appears. It destroys all the jewels with the same color as the one underneath it.
 // 		The columns fall at a faster rate as the player progresses. The goal of the game is to play for as long as possible before the well
-// 		fills up with jewels, which ends the game. Players can score up to 99,999 points.
+// 		fills up with jewels, which ends the game.
 package columns

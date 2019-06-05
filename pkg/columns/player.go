@@ -10,7 +10,10 @@ const (
 	Finished
 )
 
-const pointsPerTile = 10
+const (
+	pointsPerTile           = 10
+	numberTilesForNextLevel = 10
+)
 
 // Player implements the game flow, keeping track of the game's status for a player
 type Player struct {
@@ -21,6 +24,8 @@ type Player struct {
 	combo    int
 	slowdown int
 	paused   bool
+	gameOver bool
+	level    int
 }
 
 // NewPlayer returns a new Player instance
@@ -29,12 +34,18 @@ func NewPlayer(pit *Pit) *Player {
 		pit:     pit,
 		current: NewPiece(pit),
 		next:    NewPiece(pit),
+		level:   1,
 	}
 }
 
 // Score returns player's current score
 func (p *Player) Score() int {
 	return p.points
+}
+
+// Level returns player's current level
+func (p *Player) Level() int {
+	return p.level
 }
 
 // Current returns player's current piece falling
@@ -57,11 +68,22 @@ func (p *Player) Pause() {
 	p.paused = !p.paused
 }
 
+// IsPaused returns true if the game is paused
+func (p *Player) IsPaused() bool {
+	return p.paused
+}
+
+// IsGameOver returns true if the game is over
+func (p *Player) IsGameOver() bool {
+	return p.gameOver
+}
+
 func (p *Player) Play(events chan<- int) {
 	p.Reset()
-	ticker := time.NewTicker(250 * time.Millisecond)
+	ticker := time.NewTicker(200 * time.Millisecond)
 	go func(events chan<- int) {
 		ticks := 0
+		totalRemoved := 0
 		for range ticker.C {
 			if p.paused {
 				continue
@@ -75,20 +97,23 @@ func (p *Player) Play(events chan<- int) {
 				p.pit.Consolidate(p.current)
 				removed := p.pit.CheckLines()
 				for removed > 0 {
+					totalRemoved += removed
 					p.pit.Settle()
 					p.points += removed * p.combo * pointsPerTile
 					p.combo++
 					events <- Scored
 					removed = p.pit.CheckLines()
-					if p.slowdown > 1 {
+					if p.slowdown > 1 && totalRemoved/numberTilesForNextLevel > p.level-1 {
 						p.slowdown--
+						p.level++
 					}
 				}
 				p.combo = 1
 				p.current.Copy(p.next)
 				p.next.Renew()
-				if p.pit.Cell(3, 0) != Empty {
+				if p.pit.Cell(p.pit.Width()/2, 0) != Empty {
 					ticker.Stop()
+					p.gameOver = true
 					events <- Finished
 					return
 				}
@@ -97,6 +122,7 @@ func (p *Player) Play(events chan<- int) {
 	}(events)
 }
 
+// Reset empties pit and reset all game properties to its initial values
 func (p *Player) Reset() {
 	p.pit.Reset()
 	p.combo = 1
@@ -105,4 +131,6 @@ func (p *Player) Reset() {
 	p.current.Reset()
 	p.next.Reset()
 	p.paused = false
+	p.gameOver = false
+	p.level = 1
 }
