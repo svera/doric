@@ -1,22 +1,46 @@
 # Doric
 
-A Columns game implementation written by Sergio Vera.
+A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementation written by Sergio Vera.
+
+![Doric screenshot](screenshot.png)
 
 ## Features
 
 * The classic SEGA arcade game.
-* Game logic completely isolated from presentation, running in its own thread. [pkg/columns]() library can be used in other implementations with minimal effort. Basically:
+* Game logic completely isolated from presentation, running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Basically:
 ```go
+    package main
+
     import "github.com/svera/doric/pkg/columns"
 
     func main() {
         events := make(chan int)
         pit := columns.NewPit(13, 6)
         player := columns.NewPlayer(pit)
+        // Start the game and return game events in the events channel
         player.Play(events)
+
+        // Here you would need to start the game loop, manage input,
+        // show graphics on screen, etc.
+
+        // Listen for game events and act accordingly
+        go func() {
+            for {
+                select {
+                case ev := <-events:
+                    if ev == columns.Finished {
+                        // Do whatever
+                        return
+                    }
+                    if ev == columns.Scored {
+                        // Do whatever
+                    }
+                }
+            }
+    	}()
     }
 ```
-* A sample client using the library can be found at [cmd/doric-term]().
+* A sample client using the library can be found at [cmd/doric-term](cmd/doric-term).
 
 ## Build from sources
 
@@ -27,9 +51,19 @@ A Columns game implementation written by Sergio Vera.
 ### Instructions
 
  1. In a terminal, run `go get github.com/svera/doric`
- 2. From the source code directory, run `go build ./cmd/doric-term`.
+ 2. From the source code directory, run `go install ./cmd/doric-term` (build) or `go run ./cmd/doric-term` (build and run).
 
 ## How to play
 
 The objective of the game is to get the maximum possible score. To do that, player must eliminate falling pieces from the pit, aligning
 3 or more tiles of the same color vertically, horizontally or diagonally. Every 10 tiles removed the falling speed increases slightly.
+
+### Controls
+
+* Left or right keys: Move the current falling piece to the left or to the right
+* Down key: Move the current falling piece down
+* Tab: Rotate piece
+* P: Pause
+
+## Acknowledgments
+* [Joel Auterson](https://github.com/JoelOtter) for [TermLoop](https://github.com/JoelOtter/termloop) framework

@@ -38,46 +38,6 @@ func NewPlayer(pit *Pit) *Player {
 	}
 }
 
-// Score returns player's current score
-func (p *Player) Score() int {
-	return p.points
-}
-
-// Level returns player's current level
-func (p *Player) Level() int {
-	return p.level
-}
-
-// Current returns player's current piece falling
-func (p *Player) Current() *Piece {
-	return p.current
-}
-
-// Next returns player's next piece to be played
-func (p *Player) Next() *Piece {
-	return p.next
-}
-
-// Pit returns player's pit
-func (p *Player) Pit() *Pit {
-	return p.pit
-}
-
-// Pause stops game until executed again
-func (p *Player) Pause() {
-	p.paused = !p.paused
-}
-
-// IsPaused returns true if the game is paused
-func (p *Player) IsPaused() bool {
-	return p.paused
-}
-
-// IsGameOver returns true if the game is over
-func (p *Player) IsGameOver() bool {
-	return p.gameOver
-}
-
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
 func (p *Player) Play(events chan<- int) {
@@ -122,6 +82,46 @@ func (p *Player) Play(events chan<- int) {
 			}
 		}
 	}(events)
+}
+
+// Score returns player's current score
+func (p *Player) Score() int {
+	return p.points
+}
+
+// Level returns player's current level
+func (p *Player) Level() int {
+	return p.level
+}
+
+// Current returns player's current piece falling
+func (p *Player) Current() *Piece {
+	return p.current
+}
+
+// Next returns player's next piece to be played
+func (p *Player) Next() *Piece {
+	return p.next
+}
+
+// Pit returns player's pit
+func (p *Player) Pit() *Pit {
+	return p.pit
+}
+
+// Pause stops game until executed again
+func (p *Player) Pause() {
+	p.paused = !p.paused
+}
+
+// IsPaused returns true if the game is paused
+func (p *Player) IsPaused() bool {
+	return p.paused
+}
+
+// IsGameOver returns true if the game is over
+func (p *Player) IsGameOver() bool {
+	return p.gameOver
 }
 
 // Reset empties pit and reset all game properties to its initial values
