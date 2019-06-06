@@ -51,10 +51,8 @@ func (p *Pit) CheckLines() int {
 
 func (p *Pit) checkHorizontalLines(remove map[Coords]struct{}) {
 	for y := p.height - 1; y >= 0; y-- {
-		x := 0
-		for x < p.width-2 {
+		for x := 0; x < p.width-2; x++ {
 			if p.cells[y][x] == Empty {
-				x++
 				continue
 			}
 			if p.cells[y][x] == p.cells[y][x+1] && p.cells[y][x+1] == p.cells[y][x+2] {
@@ -62,15 +60,13 @@ func (p *Pit) checkHorizontalLines(remove map[Coords]struct{}) {
 				remove[Coords{x + 1, y}] = struct{}{}
 				remove[Coords{x + 2, y}] = struct{}{}
 			}
-			x++
 		}
 	}
 }
 
 func (p *Pit) checkVerticalLines(remove map[Coords]struct{}) {
 	for x := 0; x < p.width; x++ {
-		y := p.height - 1
-		for y > 1 {
+		for y := p.height - 1; y > 1; y-- {
 			if p.cells[y][x] == Empty {
 				break
 			}
@@ -79,19 +75,15 @@ func (p *Pit) checkVerticalLines(remove map[Coords]struct{}) {
 				remove[Coords{x, y - 1}] = struct{}{}
 				remove[Coords{x, y - 2}] = struct{}{}
 			}
-			y--
 		}
 	}
 }
 
 func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
-	for row := p.height - 1; row > 1; row-- {
+	for y := p.height - 1; y > 1; y-- {
 		// Checks for tiles to be removed in diagonal / lines
-		x := 0
-		y := row
-		for x < p.width-2 && y > 1 {
+		for x := 0; x < p.width-2 && y > 1; x++ {
 			if p.cells[y][x] == Empty {
-				x++
 				continue
 			}
 			if p.cells[y][x] == p.cells[y-1][x+1] && p.cells[y-1][x+1] == p.cells[y-2][x+2] {
@@ -99,14 +91,10 @@ func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 				remove[Coords{x + 1, y - 1}] = struct{}{}
 				remove[Coords{x + 2, y - 2}] = struct{}{}
 			}
-			x++
 		}
 		// Checks for tiles to be removed in diagonal \ lines
-		x = p.width - 1
-		y = row
-		for x > 1 && y > 1 {
+		for x := p.width - 1; x > 1 && y > 1; x-- {
 			if p.cells[y][x] == Empty {
-				x--
 				continue
 			}
 			if p.cells[y][x] == p.cells[y-1][x-1] && p.cells[y-1][x-1] == p.cells[y-2][x-2] {
@@ -114,7 +102,6 @@ func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 				remove[Coords{x - 1, y - 1}] = struct{}{}
 				remove[Coords{x - 2, y - 2}] = struct{}{}
 			}
-			x--
 		}
 	}
 }

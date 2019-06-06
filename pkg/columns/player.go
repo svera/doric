@@ -78,6 +78,8 @@ func (p *Player) IsGameOver() bool {
 	return p.gameOver
 }
 
+// Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
+// as level increases. Game ends when no more new pieces can enter the pit.
 func (p *Player) Play(events chan<- int) {
 	p.Reset()
 	ticker := time.NewTicker(200 * time.Millisecond)
