@@ -60,10 +60,10 @@ The objective of the game is to get the maximum possible score. To do that, play
 
 ### Controls
 
-* Left or right keys: Move the current falling piece to the left or to the right
-* Down key: Move the current falling piece down
-* Tab: Rotate piece
-* P: Pause
+* **Left** or **right**: Move the current falling piece to the left or to the right
+* **Down**: Move the current falling piece down
+* **Tab**: Rotate piece
+* **P**: Pause
 
 ## Acknowledgments
 * [Joel Auterson](https://github.com/JoelOtter) for [TermLoop](https://github.com/JoelOtter/termloop) framework
