@@ -1,4 +1,4 @@
-# Doric
+# Doric [![Build Status](https://travis-ci.com/svera/doric.svg?token=ZmEX1TYcmCiUitzCyjf1&branch=master)](https://travis-ci.com/svera/doric)
 
 A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementation written by Sergio Vera.
 
