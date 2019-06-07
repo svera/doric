@@ -26,8 +26,8 @@ func NewPit(rows, cols int) *Pit {
 	return &p
 }
 
-// Reset empties the pit
-func (p *Pit) Reset() {
+// reset empties the pit
+func (p *Pit) reset() {
 	for y, row := range p.cells {
 		for x := range row {
 			p.cells[y][x] = Empty
@@ -35,9 +35,9 @@ func (p *Pit) Reset() {
 	}
 }
 
-// CheckLines scans pit lines looking for tiles to be removed.
+// checkLines scans pit lines looking for tiles to be removed.
 // Tiles repeated in 3 or more consecutive positions horizontally, vertically or diagonally are to be removed.
-func (p *Pit) CheckLines() int {
+func (p *Pit) checkLines() int {
 	remove := map[Coords]struct{}{}
 	p.checkHorizontalLines(remove)
 	p.checkVerticalLines(remove)
@@ -121,22 +121,22 @@ func (p *Pit) Height() int {
 	return p.height
 }
 
-// Settle moves down all tiles which have empty cells below
-func (p *Pit) Settle() {
-	for x := 0; x < p.Width(); x++ {
+// settle moves down all tiles which have empty cells below
+func (p *Pit) settle() {
+	for x := 0; x < p.width; x++ {
 		tiles := []int{}
-		for y := p.Height() - 1; y >= 0; y-- {
-			// This cell contains a tile to be removed, do not put it in the slice of tiles to settle
+		for y := p.height - 1; y >= 0; y-- {
+			// This cell contains a tile to be removed, do not put it in the slice of tiles to settle again
 			if p.cells[y][x] < 0 {
 				continue
 			}
 			// There are no more tiles over an empty cell, so we can settle this column
 			if p.cells[y][x] == Empty {
-				for i := 0; i < p.Height(); i++ {
+				for i := 0; i < p.height; i++ {
 					if len(tiles)-1 >= i {
-						p.cells[p.Height()-1-i][x] = tiles[i]
+						p.cells[p.height-1-i][x] = tiles[i]
 					} else {
-						p.cells[p.Height()-1-i][x] = Empty
+						p.cells[p.height-1-i][x] = Empty
 					}
 				}
 				break
@@ -146,8 +146,8 @@ func (p *Pit) Settle() {
 	}
 }
 
-// Consolidate put the values of the passed piece in the pit
-func (p *Pit) Consolidate(pc *Piece) {
+// consolidate put the values of the passed piece in the pit
+func (p *Pit) consolidate(pc *Piece) {
 	for i, tile := range pc.Tiles() {
 		if pc.Y()-i < 0 {
 			return

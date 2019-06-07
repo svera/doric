@@ -37,7 +37,7 @@ func TestCheckLines(t *testing.T) {
 		[]int{-1, -1, -1, -1, -1, -1},
 		[]int{1, -1, 0, -1, -1, -1},
 	}
-	p.CheckLines()
+	p.checkLines()
 	if !reflect.DeepEqual(p.cells, expected) {
 		t.Errorf("Expected %v, got %v", expected, p.cells)
 	}
@@ -75,7 +75,7 @@ func TestCheckDiagonalLines(t *testing.T) {
 		[]int{0, -1, 0, 0, -1, 0},
 		[]int{0, 0, -1, -1, 0, 0},
 	}
-	p.CheckLines()
+	p.checkLines()
 	if !reflect.DeepEqual(p.cells, expected) {
 		t.Errorf("Expected %v, got %v", expected, p.cells)
 	}
@@ -113,7 +113,7 @@ func TestSettle(t *testing.T) {
 		[]int{0, 1, 2, 0, 0, 1},
 		[]int{1, 2, 3, 1, 4, 1},
 	}
-	p.Settle()
+	p.settle()
 	if !reflect.DeepEqual(p.cells, expected) {
 		t.Errorf("Expected %v, got %v", expected, p.cells)
 	}

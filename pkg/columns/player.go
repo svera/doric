@@ -56,15 +56,15 @@ func (p *Player) Play(events chan<- int) {
 			}
 			ticks = 0
 			if !p.current.Down() {
-				p.pit.Consolidate(p.current)
-				removed := p.pit.CheckLines()
+				p.pit.consolidate(p.current)
+				removed := p.pit.checkLines()
 				for removed > 0 {
 					totalRemoved += removed
-					p.pit.Settle()
+					p.pit.settle()
 					p.points += removed * p.combo * pointsPerTile
 					p.combo++
 					events <- Scored
-					removed = p.pit.CheckLines()
+					removed = p.pit.checkLines()
 					if p.slowdown > 1 && totalRemoved/numberTilesForNextLevel > p.level-1 {
 						p.slowdown--
 						p.level++
@@ -72,8 +72,8 @@ func (p *Player) Play(events chan<- int) {
 				}
 				p.combo = 1
 				p.current.Copy(p.next)
-				p.next.Renew()
-				if p.pit.Cell(p.pit.Width()/2, 0) != Empty {
+				p.next.RandomizeTiles()
+				if p.pit.Cell(p.pit.width/2, 0) != Empty {
 					ticker.Stop()
 					p.gameOver = true
 					events <- Finished
@@ -126,7 +126,7 @@ func (p *Player) IsGameOver() bool {
 
 // Reset empties pit and reset all game properties to its initial values
 func (p *Player) Reset() {
-	p.pit.Reset()
+	p.pit.reset()
 	p.combo = 1
 	p.slowdown = 8
 	p.points = 0

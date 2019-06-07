@@ -6,7 +6,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
 
 ## Features
 
-* The classic SEGA arcade game.
+* The classic SEGA arcade game in glorious ASCII.
 * Game logic completely isolated from presentation, running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Basically:
 ```go
     package main
@@ -40,7 +40,6 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
     	}()
     }
 ```
-* A sample client using the library can be found at [cmd/doric-term](cmd/doric-term).
 
 ## Build from sources
 

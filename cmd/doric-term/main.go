@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	offsetX = 35
-	offsetY = 5
+	offsetX   = 35
+	offsetY   = 5
+	pithWidth = 6
+	pitHeight = 13
 )
 
 var player *columns.Player
@@ -21,7 +23,7 @@ var level *tl.Text
 func main() {
 	game := tl.NewGame()
 	game.Screen().SetFps(60)
-	pit := columns.NewPit(13, 6)
+	pit := columns.NewPit(pitHeight, pithWidth)
 	player = columns.NewPlayer(pit)
 	events = make(chan int)
 	score = tl.NewText(offsetX+10, offsetY, fmt.Sprintf("Score: %d", player.Score()), tl.ColorWhite, tl.ColorBlack)
