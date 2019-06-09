@@ -14,8 +14,8 @@ const (
 	pointsPerTile           = 10
 	numberTilesForNextLevel = 10
 	// As the game loop runs every 200ms, an initialSlowdown of 8 means that pieces fall
-	// at a speed of 8*200 = 0.5 cells/sec
-	initialSlowdown = 8
+	// at a speed of 10*200 = 0.5 cells/sec
+	initialSlowdown = 10
 )
 
 // Player implements the game flow, keeping track of the game's status for a player
