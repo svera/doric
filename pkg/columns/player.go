@@ -13,6 +13,9 @@ const (
 const (
 	pointsPerTile           = 10
 	numberTilesForNextLevel = 10
+	// As the game loop runs every 200ms, an initialSlowdown of 8 means that pieces fall
+	// at a speed of 8*200 = 0.5 cells/sec
+	initialSlowdown = 8
 )
 
 // Player implements the game flow, keeping track of the game's status for a player
@@ -71,12 +74,12 @@ func (p *Player) Play(events chan<- int) {
 			p.combo = 1
 			p.current.Copy(p.next)
 			p.next.Randomize()
-		}
-		if p.pit.Cell(p.pit.width/2, 0) != Empty {
-			ticker.Stop()
-			p.gameOver = true
-			events <- Finished
-			return
+			if p.pit.Cell(p.pit.width/2, 0) != Empty {
+				ticker.Stop()
+				p.gameOver = true
+				events <- Finished
+				return
+			}
 		}
 	}
 }
@@ -125,7 +128,7 @@ func (p *Player) IsGameOver() bool {
 func (p *Player) Reset() {
 	p.pit.reset()
 	p.combo = 1
-	p.slowdown = 8
+	p.slowdown = initialSlowdown
 	p.points = 0
 	p.current.Reset()
 	p.next.Reset()

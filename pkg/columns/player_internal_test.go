@@ -15,6 +15,7 @@ func TestGameOver(t *testing.T) {
 	events := make(chan int)
 	player.Reset()
 	pit.cells[0][3] = 1
+	player.current.y = 12
 	go player.Play(events)
 	select {
 	case ev := <-events:
