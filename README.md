@@ -18,7 +18,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
         pit := columns.NewPit(13, 6)
         player := columns.NewPlayer(pit)
         // Start the game and return game events in the events channel
-        player.Play(events)
+        go player.Play(events)
 
         // Here you would need to start the game loop, manage input,
         // show graphics on screen, etc.
