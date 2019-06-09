@@ -25,13 +25,13 @@ func NewPiece(pit *Pit) *Piece {
 
 // Reset assigns three new tiles to the piece, and resets its position to the initial one
 func (p *Piece) Reset() {
-	p.RandomizeTiles()
+	p.Randomize()
 	p.x = p.pit.width / 2
 	p.y = 0
 }
 
-// RandomizeTiles assigns the piece three new tiles
-func (p *Piece) RandomizeTiles() {
+// Randomize assigns the piece three new tiles
+func (p *Piece) Randomize() {
 	r := rand.New(source)
 
 	p.tiles[0] = r.Intn(maxTile) + 1

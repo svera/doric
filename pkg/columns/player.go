@@ -41,47 +41,44 @@ func NewPlayer(pit *Pit) *Player {
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
 func (p *Player) Play(events chan<- int) {
-	p.Reset()
 	ticker := time.NewTicker(200 * time.Millisecond)
-	go func(events chan<- int) {
-		ticks := 0
-		totalRemoved := 0
-		for range ticker.C {
-			if p.paused {
-				continue
-			}
-			if ticks != p.slowdown {
-				ticks++
-				continue
-			}
-			ticks = 0
-			if !p.current.Down() {
-				p.pit.consolidate(p.current)
-				removed := p.pit.checkLines()
-				for removed > 0 {
-					totalRemoved += removed
-					p.pit.settle()
-					p.points += removed * p.combo * pointsPerTile
-					p.combo++
-					events <- Scored
-					removed = p.pit.checkLines()
-					if p.slowdown > 1 && totalRemoved/numberTilesForNextLevel > p.level-1 {
-						p.slowdown--
-						p.level++
-					}
-				}
-				p.combo = 1
-				p.current.Copy(p.next)
-				p.next.RandomizeTiles()
-				if p.pit.Cell(p.pit.width/2, 0) != Empty {
-					ticker.Stop()
-					p.gameOver = true
-					events <- Finished
-					return
-				}
-			}
+	ticks := 0
+	totalRemoved := 0
+	for range ticker.C {
+		if p.paused {
+			continue
 		}
-	}(events)
+		if ticks != p.slowdown {
+			ticks++
+			continue
+		}
+		ticks = 0
+		if !p.current.Down() {
+			p.pit.consolidate(p.current)
+			removed := p.pit.checkLines()
+			for removed > 0 {
+				totalRemoved += removed
+				p.pit.settle()
+				p.points += removed * p.combo * pointsPerTile
+				p.combo++
+				events <- Scored
+				removed = p.pit.checkLines()
+				if p.slowdown > 1 && totalRemoved/numberTilesForNextLevel > p.level-1 {
+					p.slowdown--
+					p.level++
+				}
+			}
+			p.combo = 1
+			p.current.Copy(p.next)
+			p.next.Randomize()
+		}
+		if p.pit.Cell(p.pit.width/2, 0) != Empty {
+			ticker.Stop()
+			p.gameOver = true
+			events <- Finished
+			return
+		}
+	}
 }
 
 // Score returns player's current score

@@ -51,9 +51,10 @@ func setUpMainLevel() {
 }
 
 func startGameLogic() {
-	player.Play(events)
+	player.Reset()
 	score.SetText(fmt.Sprintf("Score: %d", player.Score()))
 	level.SetText(fmt.Sprintf("Level: %d", player.Level()))
+	go player.Play(events)
 	go func() {
 		for {
 			select {
