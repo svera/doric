@@ -33,12 +33,14 @@ type Player struct {
 
 // NewPlayer returns a new Player instance
 func NewPlayer(pit *Pit) *Player {
-	return &Player{
+	p := &Player{
 		pit:     pit,
 		current: NewPiece(pit),
 		next:    NewPiece(pit),
 		level:   1,
 	}
+	p.Reset()
+	return p
 }
 
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds

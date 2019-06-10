@@ -5,8 +5,7 @@ import (
 	"github.com/svera/doric/pkg/columns"
 )
 
-// Player represents the piece currently falling in the pit,
-// as shown on screen
+// Player handles player's interactions in the game, like moving the piece currently falling in the pit
 type Player struct {
 	*tl.Entity
 	player    *columns.Player
@@ -16,7 +15,7 @@ type Player struct {
 	startGame func()
 }
 
-// NewPlayer returns a new Piece instance
+// NewPlayer returns a new Player instance
 func NewPlayer(p *columns.Player, startGame func(), message tl.Drawable, offsetX int, offsetY int) *Player {
 	return &Player{
 		player:    p,
@@ -68,6 +67,7 @@ func (p *Player) Tick(event tl.Event) {
 			p.player.Current().Rotate()
 		case tl.KeySpace:
 			if p.player.IsGameOver() {
+				p.player.Reset()
 				p.startGame()
 			}
 		}

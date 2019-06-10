@@ -51,7 +51,6 @@ func setUpMainLevel() {
 }
 
 func startGameLogic() {
-	player.Reset()
 	score.SetText(fmt.Sprintf("Score: %d", player.Score()))
 	level.SetText(fmt.Sprintf("Level: %d", player.Level()))
 	go player.Play(events)
