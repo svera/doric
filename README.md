@@ -63,7 +63,7 @@ The objective of the game is to get the maximum possible score. To do that, play
 * **Down**: Move the current falling piece down
 * **Tab**: Rotate piece
 * **P**: Pause
-+ **Ctrl-c**: Quit
+* **Ctrl-c**: Quit
 
 ## Acknowledgments
 * [Joel Auterson](https://github.com/JoelOtter) for [TermLoop](https://github.com/JoelOtter/termloop) framework
