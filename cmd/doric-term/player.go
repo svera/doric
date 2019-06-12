@@ -30,13 +30,13 @@ func NewPlayer(p *columns.Player, startGame func(), message tl.Drawable, offsetX
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
 	if p.player.IsPaused() {
-		p.message.(*tl.Text).SetPosition(offsetX+1, offsetY+5)
+		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
 	if p.player.IsGameOver() {
-		p.message.(*tl.Text).SetPosition(offsetX-1, offsetY+5)
-		p.message.(*tl.Text).SetText("GAME OVER")
+		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
+		p.message.(*tl.Text).SetText("GAME  OVER")
 		return
 	}
 	p.message.(*tl.Text).SetText("")
@@ -44,10 +44,15 @@ func (p *Player) Draw(screen *tl.Screen) {
 		if i > p.player.Current().Y() {
 			continue
 		}
-		screen.RenderCell(p.player.Current().X()+p.offsetX+1, p.player.Current().Y()+p.offsetY-i, &tl.Cell{
+		screen.RenderCell(p.player.Current().X()*2+p.offsetX+1, p.player.Current().Y()+p.offsetY-i, &tl.Cell{
 			Bg: colors[p.player.Current().Tiles()[i]],
 			Fg: tl.ColorBlack,
-			Ch: chars[p.player.Current().Tiles()[i]],
+			Ch: '[',
+		})
+		screen.RenderCell(p.player.Current().X()*2+p.offsetX+2, p.player.Current().Y()+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.player.Current().Tiles()[i]],
+			Fg: tl.ColorBlack,
+			Ch: ']',
 		})
 	}
 }

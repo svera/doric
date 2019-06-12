@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	tl "github.com/JoelOtter/termloop"
 	"github.com/svera/doric/pkg/columns"
 )
@@ -29,18 +26,13 @@ func NewPit(p *columns.Pit, offsetX int, offsetY int) *Pit {
 // Draw draws pit on screen
 func (p *Pit) Draw(screen *tl.Screen) {
 	var x, y int
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Printf("valor de la celda error: %d", p.pit.Cell(x, y))
-			os.Exit(1)
-		}
-	}()
+
 	// Pit bottom corners
 	screen.RenderCell(p.offsetX, p.offsetY+p.pit.Height(), &tl.Cell{
 		Bg: tl.ColorWhite,
 		Ch: ' ',
 	})
-	screen.RenderCell(p.offsetX+p.pit.Width()+1, p.offsetY+p.pit.Height(), &tl.Cell{
+	screen.RenderCell(p.offsetX+p.pit.Width()*2+1, p.offsetY+p.pit.Height(), &tl.Cell{
 		Bg: tl.ColorWhite,
 		Ch: ' ',
 	})
@@ -56,26 +48,40 @@ func (p *Pit) Draw(screen *tl.Screen) {
 			}
 			// Pit right border
 			if x == p.pit.Width()-1 {
-				screen.RenderCell(p.offsetX+p.pit.Width()+1, p.offsetY+y, &tl.Cell{
+				screen.RenderCell(p.offsetX+p.pit.Width()*2+1, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
 			}
 			// Pit bottom
 			if y == p.pit.Height()-1 {
-				screen.RenderCell(p.offsetX+x+1, p.offsetY+y+1, &tl.Cell{
+				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y+1, &tl.Cell{
+					Bg: tl.ColorWhite,
+					Ch: ' ',
+				})
+				screen.RenderCell(p.offsetX+(x*2+1)+1, p.offsetY+y+1, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
 			}
+			// Tiles
 			if p.pit.Cell(x, y) > columns.Empty {
-				screen.RenderCell(p.offsetX+x+1, p.offsetY+y, &tl.Cell{
+				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.pit.Cell(x, y)],
 					Fg: tl.ColorBlack,
-					Ch: chars[p.pit.Cell(x, y)],
+					Ch: '[',
+				})
+				screen.RenderCell(p.offsetX+(x*2+1)+1, p.offsetY+y, &tl.Cell{
+					Bg: colors[p.pit.Cell(x, y)],
+					Fg: tl.ColorBlack,
+					Ch: ']',
 				})
 			} else {
-				screen.RenderCell(p.offsetX+x+1, p.offsetY+y, &tl.Cell{
+				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
+					Bg: colors[p.pit.Cell(x, y)],
+					Ch: ' ',
+				})
+				screen.RenderCell(p.offsetX+(x*2+1)+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.pit.Cell(x, y)],
 					Ch: ' ',
 				})

@@ -29,7 +29,12 @@ func (n *Next) Draw(screen *tl.Screen) {
 		screen.RenderCell(n.offsetX, n.offsetY-i, &tl.Cell{
 			Bg: colors[n.piece.Tiles()[i]],
 			Fg: tl.ColorBlack,
-			Ch: chars[n.piece.Tiles()[i]],
+			Ch: '[',
+		})
+		screen.RenderCell(n.offsetX+1, n.offsetY-i, &tl.Cell{
+			Bg: colors[n.piece.Tiles()[i]],
+			Fg: tl.ColorBlack,
+			Ch: ']',
 		})
 	}
 }

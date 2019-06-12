@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	offsetX   = 35
+	offsetX   = 32
 	offsetY   = 5
 	pithWidth = 6
 	pitHeight = 13
@@ -26,8 +26,8 @@ func main() {
 	pit := columns.NewPit(pitHeight, pithWidth)
 	player = columns.NewPlayer(pit)
 	events = make(chan int)
-	score = tl.NewText(offsetX+10, offsetY, fmt.Sprintf("Score: %d", player.Score()), tl.ColorWhite, tl.ColorBlack)
-	level = tl.NewText(offsetX+10, offsetY+1, fmt.Sprintf("Level: %d", player.Level()), tl.ColorWhite, tl.ColorBlack)
+	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", player.Score()), tl.ColorWhite, tl.ColorBlack)
+	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", player.Level()), tl.ColorWhite, tl.ColorBlack)
 	setUpMainLevel()
 	game.Screen().SetLevel(mainLevel)
 	startGameLogic()
@@ -41,7 +41,7 @@ func setUpMainLevel() {
 	pitEntity := NewPit(player.Pit(), offsetX, offsetY)
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
 	playerEntity := NewPlayer(player, startGameLogic, message, offsetX, offsetY)
-	nextPieceEntity := NewNext(player.Next(), offsetX+10, offsetY+5)
+	nextPieceEntity := NewNext(player.Next(), offsetX+15, offsetY+5)
 	mainLevel.AddEntity(pitEntity)
 	mainLevel.AddEntity(playerEntity)
 	mainLevel.AddEntity(nextPieceEntity)
