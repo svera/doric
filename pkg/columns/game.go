@@ -13,9 +13,11 @@ const (
 const (
 	pointsPerTile           = 10
 	numberTilesForNextLevel = 10
-	// As the game loop runs every 200ms, an initialSlowdown of 8 means that pieces fall
+	// As the game loop running frequency every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
+	// For a updating frwequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
 	initialSlowdown = 10
+	frequency       = 200
 )
 
 // Game implements the game flow, keeping track of the game's status for a player
@@ -46,7 +48,7 @@ func NewGame(pit *Pit) *Game {
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
 func (g *Game) Play(events chan<- int) {
-	ticker := time.NewTicker(200 * time.Millisecond)
+	ticker := time.NewTicker(frequency * time.Millisecond)
 	ticks := 0
 	totalRemoved := 0
 	for range ticker.C {
