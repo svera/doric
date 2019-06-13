@@ -5,10 +5,10 @@ import (
 	"github.com/svera/doric/pkg/columns"
 )
 
-// Player handles player's interactions in the game, like moving the piece currently falling in the pit
+// Player handles game's interactions in the game, like moving the piece currently falling in the pit
 type Player struct {
 	*tl.Entity
-	player    *columns.Player
+	game      *columns.Game
 	offsetX   int
 	offsetY   int
 	message   tl.Drawable
@@ -16,9 +16,9 @@ type Player struct {
 }
 
 // NewPlayer returns a new Player instance
-func NewPlayer(p *columns.Player, startGame func(), message tl.Drawable, offsetX int, offsetY int) *Player {
+func NewPlayer(p *columns.Game, startGame func(), message tl.Drawable, offsetX int, offsetY int) *Player {
 	return &Player{
-		player:    p,
+		game:      p,
 		offsetX:   offsetX,
 		offsetY:   offsetY,
 		message:   message,
@@ -29,28 +29,28 @@ func NewPlayer(p *columns.Player, startGame func(), message tl.Drawable, offsetX
 // Draw draws the piece on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
-	if p.player.IsPaused() {
+	if p.game.IsPaused() {
 		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
-	if p.player.IsGameOver() {
+	if p.game.IsGameOver() {
 		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
 		p.message.(*tl.Text).SetText("GAME  OVER")
 		return
 	}
 	p.message.(*tl.Text).SetText("")
-	for i := range p.player.Current().Tiles() {
-		if i > p.player.Current().Y() {
+	for i := range p.game.Current().Tiles() {
+		if i > p.game.Current().Y() {
 			continue
 		}
-		screen.RenderCell(p.player.Current().X()*2+p.offsetX+1, p.player.Current().Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.player.Current().Tiles()[i]],
+		screen.RenderCell(p.game.Current().X()*2+p.offsetX+1, p.game.Current().Y()+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.game.Current().Tiles()[i]],
 			Fg: tl.ColorBlack,
 			Ch: '[',
 		})
-		screen.RenderCell(p.player.Current().X()*2+p.offsetX+2, p.player.Current().Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.player.Current().Tiles()[i]],
+		screen.RenderCell(p.game.Current().X()*2+p.offsetX+2, p.game.Current().Y()+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.game.Current().Tiles()[i]],
 			Fg: tl.ColorBlack,
 			Ch: ']',
 		})
@@ -63,23 +63,23 @@ func (p *Player) Tick(event tl.Event) {
 	if event.Type == tl.EventKey { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
-			p.player.Current().Right()
+			p.game.Current().Right()
 		case tl.KeyArrowLeft:
-			p.player.Current().Left()
+			p.game.Current().Left()
 		case tl.KeyArrowDown:
-			p.player.Current().Down()
+			p.game.Current().Down()
 		case tl.KeyTab:
-			p.player.Current().Rotate()
+			p.game.Current().Rotate()
 		case tl.KeySpace:
-			if p.player.IsGameOver() {
-				p.player.Reset()
+			if p.game.IsGameOver() {
+				p.game.Reset()
 				p.startGame()
 			}
 		}
 
 		switch event.Ch {
 		case 'p', 'P':
-			p.player.Pause()
+			p.game.Pause()
 		}
 	}
 }
