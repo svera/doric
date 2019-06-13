@@ -7,8 +7,8 @@ import (
 
 func TestRotate(t *testing.T) {
 	p := NewPiece(NewPit(13, 6))
-	p.tiles = []int{1, 2, 3}
-	expected := []int{3, 1, 2}
+	p.tiles = [3]int{1, 2, 3}
+	expected := [3]int{3, 1, 2}
 	p.Rotate()
 	if !reflect.DeepEqual(p.tiles, expected) {
 		t.Errorf("Expected %v, got %v", expected, p.tiles)
@@ -17,7 +17,7 @@ func TestRotate(t *testing.T) {
 
 func TestMovement(t *testing.T) {
 	p := NewPiece(NewPit(13, 6))
-	p.tiles = []int{1, 2, 3}
+	p.tiles = [3]int{1, 2, 3}
 	p.x = 0
 	p.Left()
 	if p.x != 0 {
@@ -67,7 +67,7 @@ func TestMovement(t *testing.T) {
 func TestCopy(t *testing.T) {
 	p1 := NewPiece(NewPit(13, 6))
 	p2 := NewPiece(NewPit(13, 6))
-	p1.tiles = []int{1, 2, 3}
+	p1.tiles = [3]int{1, 2, 3}
 	p1.x = 1
 	p1.y = 1
 	p2.Copy(p1)

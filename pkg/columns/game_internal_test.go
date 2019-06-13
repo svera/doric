@@ -33,6 +33,7 @@ func TestScore(t *testing.T) {
 	pit.cells[12][2] = 1
 	game.current.x = 5
 	game.current.y = 12
+	game.current.tiles = [3]int{4, 5, 6}
 	go game.Play(events)
 
 	select {
@@ -60,7 +61,7 @@ func TestCurrent(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
 	game := NewGame(pit)
 	p := &Piece{
-		tiles: []int{1, 2, 3},
+		tiles: [3]int{1, 2, 3},
 	}
 	game.current = p
 	if game.Current() != p {
@@ -72,7 +73,7 @@ func TestNext(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
 	game := NewGame(pit)
 	p := &Piece{
-		tiles: []int{1, 2, 3},
+		tiles: [3]int{1, 2, 3},
 	}
 	game.next = p
 	if game.Next() != p {

@@ -9,7 +9,7 @@ const maxTile = 6
 
 // Piece represents a piece to fall in the pit
 type Piece struct {
-	tiles []int
+	tiles [3]int
 	Coords
 	pit *Pit
 }
@@ -17,7 +17,7 @@ type Piece struct {
 // NewPiece returns a new Piece instance
 func NewPiece(pit *Pit) *Piece {
 	return &Piece{
-		make([]int, 3),
+		[3]int{},
 		Coords{pit.width / 2, 0},
 		pit,
 	}
@@ -81,7 +81,7 @@ func (p *Piece) Rotate() {
 }
 
 // Tiles returns Piece's tiles
-func (p *Piece) Tiles() []int {
+func (p *Piece) Tiles() [3]int {
 	return p.tiles
 }
 
