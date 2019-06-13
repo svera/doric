@@ -15,7 +15,7 @@ const (
 	numberTilesForNextLevel = 10
 	// As the game loop running frequency every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
-	// For a updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
+	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
 	initialSlowdown = 10
 	frequency       = 200
 )
