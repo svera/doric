@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	tl "github.com/JoelOtter/termloop"
 	"github.com/svera/doric/pkg/columns"
@@ -24,7 +26,8 @@ func main() {
 	game := tl.NewGame()
 	game.Screen().SetFps(60)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	gameLogic = columns.NewGame(pit)
+	source := rand.NewSource(time.Now().UnixNano())
+	gameLogic = columns.NewGame(pit, source)
 	events = make(chan int)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", gameLogic.Score()), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", gameLogic.Level()), tl.ColorWhite, tl.ColorBlack)

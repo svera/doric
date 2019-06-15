@@ -1,6 +1,7 @@
 package columns
 
 import (
+	"math/rand"
 	"testing"
 )
 
@@ -11,7 +12,7 @@ const (
 
 func TestGameOver(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	events := make(chan int)
 	pit.cells[0][3] = 1
 	game.current.y = 12
@@ -26,7 +27,7 @@ func TestGameOver(t *testing.T) {
 
 func TestScore(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	events := make(chan int)
 	pit.cells[12][0] = 1
 	pit.cells[12][1] = 1
@@ -51,7 +52,7 @@ func TestScore(t *testing.T) {
 
 func TestLevel(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	if game.Level() != 1 {
 		t.Errorf("Level should be 1, got %d", game.Level())
 	}
@@ -59,7 +60,7 @@ func TestLevel(t *testing.T) {
 
 func TestCurrent(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	p := &Piece{
 		tiles: [3]int{1, 2, 3},
 	}
@@ -71,7 +72,7 @@ func TestCurrent(t *testing.T) {
 
 func TestNext(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	p := &Piece{
 		tiles: [3]int{1, 2, 3},
 	}
@@ -83,7 +84,7 @@ func TestNext(t *testing.T) {
 
 func TestPit(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	if game.Pit() != pit {
 		t.Errorf("Pit not returned")
 	}
@@ -91,7 +92,7 @@ func TestPit(t *testing.T) {
 
 func TestPause(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	if game.IsPaused() {
 		t.Errorf("Game shouldn't be in paused state")
 	}
@@ -103,7 +104,7 @@ func TestPause(t *testing.T) {
 
 func TestIsGameOver(t *testing.T) {
 	pit := NewPit(pitHeight, pithWidth)
-	game := NewGame(pit)
+	game := NewGame(pit, rand.NewSource(0))
 	if game.IsGameOver() {
 		t.Errorf("Game shouldn't be over")
 	}

@@ -65,8 +65,9 @@ func TestMovement(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
-	p1 := NewPiece(NewPit(13, 6))
-	p2 := NewPiece(NewPit(13, 6))
+	pit := NewPit(13, 6)
+	p1 := NewPiece(pit)
+	p2 := NewPiece(pit)
 	p1.tiles = [3]int{1, 2, 3}
 	p1.x = 1
 	p1.y = 1

@@ -1,6 +1,7 @@
 package columns
 
 import (
+	"math/rand"
 	"time"
 )
 
@@ -31,15 +32,17 @@ type Game struct {
 	paused   bool
 	gameOver bool
 	level    int
+	source   rand.Source
 }
 
 // NewGame returns a new Game instance
-func NewGame(pit *Pit) *Game {
+func NewGame(p *Pit, src rand.Source) *Game {
 	g := &Game{
-		pit:     pit,
-		current: NewPiece(pit),
-		next:    NewPiece(pit),
+		pit:     p,
+		current: NewPiece(p),
+		next:    NewPiece(p),
 		level:   1,
+		source:  src,
 	}
 	g.Reset()
 	return g
@@ -77,7 +80,7 @@ func (g *Game) Play(events chan<- int) {
 			}
 			g.combo = 1
 			g.current.Copy(g.next)
-			g.next.Randomize()
+			g.next.Randomize(g.source)
 			if g.pit.Cell(g.pit.width/2, 0) != Empty {
 				ticker.Stop()
 				g.gameOver = true
@@ -134,8 +137,8 @@ func (g *Game) Reset() {
 	g.combo = 1
 	g.slowdown = initialSlowdown
 	g.points = 0
-	g.current.Reset()
-	g.next.Reset()
+	g.current.Reset(g.source)
+	g.next.Reset(g.source)
 	g.paused = false
 	g.gameOver = false
 	g.level = 1
