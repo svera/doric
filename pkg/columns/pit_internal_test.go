@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestCheckLines(t *testing.T) {
+func TestMarkLinesToRemove(t *testing.T) {
 	p := NewPit(13, 6)
-	p.cells = [][]int{
+	p.Cells = [][]int{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -37,15 +37,15 @@ func TestCheckLines(t *testing.T) {
 		{-1, -1, -1, -1, -1, -1},
 		{1, -1, 0, -1, -1, -1},
 	}
-	p.checkLines()
-	if !reflect.DeepEqual(p.cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.cells)
+	p.markTilesToRemove()
+	if !reflect.DeepEqual(p.Cells, expected) {
+		t.Errorf("Expected %v, got %v", expected, p.Cells)
 	}
 }
 
-func TestCheckDiagonalLines(t *testing.T) {
+func TestMarkLinesToRemoveDiagonal(t *testing.T) {
 	p := NewPit(13, 6)
-	p.cells = [][]int{
+	p.Cells = [][]int{
 		{1, 0, 0, 0, 0, 1},
 		{0, 1, 0, 0, 1, 0},
 		{0, 0, 1, 1, 0, 0},
@@ -75,15 +75,14 @@ func TestCheckDiagonalLines(t *testing.T) {
 		{0, -1, 0, 0, -1, 0},
 		{0, 0, -1, -1, 0, 0},
 	}
-	p.checkLines()
-	if !reflect.DeepEqual(p.cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.cells)
+	p.markTilesToRemove()
+	if !reflect.DeepEqual(p.Cells, expected) {
+		t.Errorf("Expected %v, got %v", expected, p.Cells)
 	}
 }
-
 func TestSettle(t *testing.T) {
 	p := NewPit(13, 6)
-	p.cells = [][]int{
+	p.Cells = [][]int{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -114,16 +113,7 @@ func TestSettle(t *testing.T) {
 		{1, 2, 3, 1, 4, 1},
 	}
 	p.settle()
-	if !reflect.DeepEqual(p.cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.cells)
-	}
-}
-
-func TestCell(t *testing.T) {
-	p := NewPit(13, 6)
-	p.cells[12][0] = 1
-	p.cells[0][5] = 1
-	if p.Cell(0, 12) != 1 || p.Cell(5, 0) != 1 {
-		t.Errorf("Cell() not returning the right value")
+	if !reflect.DeepEqual(p.Cells, expected) {
+		t.Errorf("Expected %v, got %v", expected, p.Cells)
 	}
 }

@@ -1,11 +1,12 @@
 package columns
 
-import (
-	"math/rand"
-)
-
 // maxTile is the maximum tile value a piece can contain
 const maxTile = 6
+
+// Randomizer defines a required method to get random integer values
+type Randomizer interface {
+	Intn(n int) int
+}
 
 // Piece represents a piece to fall in the pit
 type Piece struct {
@@ -15,25 +16,24 @@ type Piece struct {
 }
 
 // NewPiece returns a new Piece instance
-func NewPiece(pit *Pit) *Piece {
-	return &Piece{
-		[3]int{},
-		Coords{pit.width / 2, 0},
-		pit,
+func NewPiece(pit *Pit, r Randomizer) *Piece {
+	p := &Piece{
+		tiles: [3]int{},
+		pit:   pit,
 	}
+	p.reset(r)
+	return p
 }
 
-// Reset assigns three new tiles to the piece, and resets its position to the initial one
-func (p *Piece) Reset(source rand.Source) {
-	p.Randomize(source)
-	p.x = p.pit.width / 2
+// reset assigns three new tiles to the piece, and resets its position to the initial one
+func (p *Piece) reset(r Randomizer) {
+	p.randomize(r)
+	p.x = p.pit.Width() / 2
 	p.y = 0
 }
 
-// Randomize assigns the piece three new tiles
-func (p *Piece) Randomize(source rand.Source) {
-	r := rand.New(source)
-
+// randomize assigns the piece three new tiles
+func (p *Piece) randomize(r Randomizer) {
 	p.tiles[0] = r.Intn(maxTile) + 1
 	p.tiles[1] = r.Intn(maxTile) + 1
 	p.tiles[2] = r.Intn(maxTile) + 1
@@ -60,14 +60,14 @@ func (p *Piece) Left() {
 // Right moves the piece to the right in the pit if that position is empty
 // and not out of bounds
 func (p *Piece) Right() {
-	if p.x < p.pit.width-1 && p.pit.Cell(p.x+1, p.y) == Empty {
+	if p.x < p.pit.Width()-1 && p.pit.Cell(p.x+1, p.y) == Empty {
 		p.x++
 	}
 }
 
 // Down moves the current piece down in the pit. If the piece cannot fall further, returns false.
 func (p *Piece) Down() bool {
-	if p.y < p.pit.height-1 && p.pit.Cell(p.x, p.y+1) == Empty {
+	if p.y < p.pit.Height()-1 && p.pit.Cell(p.x, p.y+1) == Empty {
 		p.y++
 		return true
 	}
@@ -90,6 +90,6 @@ func (p *Piece) Copy(next *Piece) {
 	p.tiles[0] = next.Tiles()[0]
 	p.tiles[1] = next.Tiles()[1]
 	p.tiles[2] = next.Tiles()[2]
-	p.x = p.pit.width / 2
+	p.x = p.pit.Width() / 2
 	p.y = 0
 }

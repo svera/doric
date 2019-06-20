@@ -1,0 +1,101 @@
+package columns_test
+
+import (
+	"testing"
+
+	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric/pkg/columns/mocks"
+)
+
+const (
+	pithWidth = 6
+	pitHeight = 13
+)
+
+func TestGameOver(t *testing.T) {
+	pit := columns.NewPit(1, pithWidth)
+	r := &mocks.Randomizer{Values: []int{0}}
+	game := columns.NewGame(pit, r)
+	events := make(chan int)
+	pit.Cells[0][3] = 1
+	go game.Play(events)
+	select {
+	case ev := <-events:
+		if ev == columns.Finished {
+			break
+		}
+	}
+	if !game.IsGameOver() {
+		t.Errorf("Game should be over")
+	}
+}
+
+func TestPit(t *testing.T) {
+	pit := columns.NewPit(pitHeight, pithWidth)
+	r := &mocks.Randomizer{Values: []int{0}}
+	game := columns.NewGame(pit, r)
+	if game.Pit() != pit {
+		t.Errorf("Pit not returned")
+	}
+}
+
+func TestLevel(t *testing.T) {
+	pit := columns.NewPit(pitHeight, pithWidth)
+	r := &mocks.Randomizer{Values: []int{0}}
+	game := columns.NewGame(pit, r)
+	if game.Level() != 1 {
+		t.Errorf("Level should be 1, got %d", game.Level())
+	}
+}
+
+func TestScore(t *testing.T) {
+	pit := columns.NewPit(3, pithWidth)
+	r := &mocks.Randomizer{Values: []int{1}}
+	game := columns.NewGame(pit, r)
+	events := make(chan int)
+	pit.Cells[1][3] = 1
+	pit.Cells[2][3] = 1
+	go game.Play(events)
+
+	select {
+	case ev := <-events:
+		if ev == columns.Scored {
+			if game.Score() != 30 {
+				t.Errorf("Score should be 30, got %d", game.Score())
+			}
+
+			return
+		}
+	}
+
+}
+func TestCurrent(t *testing.T) {
+	pit := columns.NewPit(pitHeight, pithWidth)
+	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	game := columns.NewGame(pit, r)
+	if game.Current().Tiles() != [3]int{1, 2, 3} {
+		t.Errorf("Current piece not returned")
+	}
+}
+
+func TestNext(t *testing.T) {
+	pit := columns.NewPit(pitHeight, pithWidth)
+	r := &mocks.Randomizer{Values: []int{5, 5, 5, 0, 1, 2}}
+	game := columns.NewGame(pit, r)
+	if game.Next().Tiles() != [3]int{1, 2, 3} {
+		t.Errorf("Next piece not returned")
+	}
+}
+
+func TestPause(t *testing.T) {
+	pit := columns.NewPit(pitHeight, pithWidth)
+	r := &mocks.Randomizer{Values: []int{1}}
+	game := columns.NewGame(pit, r)
+	if game.IsPaused() {
+		t.Errorf("Game shouldn't be in paused state")
+	}
+	game.Pause()
+	if !game.IsPaused() {
+		t.Errorf("Game should be in paused state")
+	}
+}

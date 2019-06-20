@@ -1,7 +1,6 @@
 package columns
 
 import (
-	"math/rand"
 	"time"
 )
 
@@ -32,17 +31,17 @@ type Game struct {
 	paused   bool
 	gameOver bool
 	level    int
-	source   rand.Source
+	rand     Randomizer
 }
 
 // NewGame returns a new Game instance
-func NewGame(p *Pit, src rand.Source) *Game {
+func NewGame(p *Pit, r Randomizer) *Game {
 	g := &Game{
 		pit:     p,
-		current: NewPiece(p),
-		next:    NewPiece(p),
+		current: NewPiece(p, r),
+		next:    NewPiece(p, r),
 		level:   1,
-		source:  src,
+		rand:    r,
 	}
 	g.Reset()
 	return g
@@ -65,14 +64,14 @@ func (g *Game) Play(events chan<- int) {
 		ticks = 0
 		if !g.current.Down() {
 			g.pit.consolidate(g.current)
-			removed := g.pit.checkLines()
+			removed := g.pit.markTilesToRemove()
 			for removed > 0 {
 				totalRemoved += removed
 				g.pit.settle()
 				g.points += removed * g.combo * pointsPerTile
 				g.combo++
 				events <- Scored
-				removed = g.pit.checkLines()
+				removed = g.pit.markTilesToRemove()
 				if g.slowdown > 1 && totalRemoved/numberTilesForNextLevel > g.level-1 {
 					g.slowdown--
 					g.level++
@@ -80,8 +79,8 @@ func (g *Game) Play(events chan<- int) {
 			}
 			g.combo = 1
 			g.current.Copy(g.next)
-			g.next.Randomize(g.source)
-			if g.pit.Cell(g.pit.width/2, 0) != Empty {
+			g.next.randomize(g.rand)
+			if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 				ticker.Stop()
 				g.gameOver = true
 				events <- Finished
@@ -137,8 +136,8 @@ func (g *Game) Reset() {
 	g.combo = 1
 	g.slowdown = initialSlowdown
 	g.points = 0
-	g.current.Reset(g.source)
-	g.next.Reset(g.source)
+	g.current.reset(g.rand)
+	g.next.randomize(g.rand)
 	g.paused = false
 	g.gameOver = false
 	g.level = 1
