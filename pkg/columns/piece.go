@@ -16,13 +16,15 @@ type Piece struct {
 }
 
 // NewPiece returns a new Piece instance
-func NewPiece(pit *Pit, r Randomizer) *Piece {
-	p := &Piece{
+func NewPiece(pit *Pit) *Piece {
+	return &Piece{
 		tiles: [3]int{},
 		pit:   pit,
+		Coords: Coords{
+			x: pit.Width() / 2,
+			y: 0,
+		},
 	}
-	p.reset(r)
-	return p
 }
 
 // reset assigns three new tiles to the piece, and resets its position to the initial one

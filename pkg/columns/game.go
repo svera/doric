@@ -39,8 +39,8 @@ type Game struct {
 func NewGame(p *Pit, r Randomizer) *Game {
 	g := &Game{
 		pit:     p,
-		current: NewPiece(p, r),
-		next:    NewPiece(p, r),
+		current: NewPiece(p),
+		next:    NewPiece(p),
 		level:   1,
 		rand:    r,
 	}

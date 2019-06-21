@@ -3,13 +3,15 @@ package columns
 import (
 	"reflect"
 	"testing"
+)
 
-	"github.com/svera/doric/pkg/columns/mocks"
+const (
+	pithWidth = 6
+	pitHeight = 13
 )
 
 func TestMovement(t *testing.T) {
-	r := &mocks.Randomizer{Values: []int{1}}
-	p := NewPiece(NewPit(13, 6), r)
+	p := NewPiece(NewPit(pitHeight, pithWidth))
 	p.tiles = [3]int{1, 2, 3}
 	p.x = 0
 	p.Left()
