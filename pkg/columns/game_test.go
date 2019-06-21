@@ -50,7 +50,7 @@ func TestLevel(t *testing.T) {
 
 func TestScore(t *testing.T) {
 	pit := columns.NewPit(3, pithWidth)
-	r := &mocks.Randomizer{Values: []int{1}}
+	r := &mocks.Randomizer{Values: []int{0, 1, 2, 3, 4, 5}}
 	game := columns.NewGame(pit, r)
 	events := make(chan int)
 	pit.Cells[1][3] = 1
@@ -63,12 +63,26 @@ func TestScore(t *testing.T) {
 			if game.Score() != 30 {
 				t.Errorf("Score should be 30, got %d", game.Score())
 			}
-
+		}
+	}
+	select {
+	case ev := <-events:
+		if ev == columns.Renewed {
+			expectedTiles := [3]int{4, 5, 6}
+			if game.Current().Tiles() != expectedTiles {
+				t.Errorf(
+					"Expected that the next piece was copied to the current one with values %v, got %v",
+					expectedTiles,
+					game.Current().Tiles(),
+				)
+			}
 			return
 		}
 	}
 
+	t.Errorf("Score event should have been sent and current piece should have been renewed")
 }
+
 func TestCurrent(t *testing.T) {
 	pit := columns.NewPit(pitHeight, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}

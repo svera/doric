@@ -81,12 +81,12 @@ func (p *Piece) Rotate() {
 }
 
 // Tiles returns Piece's tiles
-func (p *Piece) Tiles() [3]int {
+func (p Piece) Tiles() [3]int {
 	return p.tiles
 }
 
-// Copy copies the tiles from the passed piece, and resets its position to the initial one
-func (p *Piece) Copy(next *Piece) {
+// copy copies the tiles from the passed piece, and resets its position to the initial one
+func (p *Piece) copy(next *Piece) {
 	p.tiles[0] = next.Tiles()[0]
 	p.tiles[1] = next.Tiles()[1]
 	p.tiles[2] = next.Tiles()[2]

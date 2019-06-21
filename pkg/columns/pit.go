@@ -48,7 +48,7 @@ func (p *Pit) markTilesToRemove() int {
 func (p *Pit) checkHorizontalLines(remove map[Coords]struct{}) {
 	for y := p.Height() - 1; y >= 0; y-- {
 		for x := 0; x < p.Width()-2; x++ {
-			if p.Cells[y][x] == Empty {
+			if p.Cells[y][x] == Empty || p.Cells[y][x] == Remove {
 				continue
 			}
 			if p.Cells[y][x] == p.Cells[y][x+1] && p.Cells[y][x+1] == p.Cells[y][x+2] {
@@ -63,7 +63,7 @@ func (p *Pit) checkHorizontalLines(remove map[Coords]struct{}) {
 func (p *Pit) checkVerticalLines(remove map[Coords]struct{}) {
 	for x := 0; x < p.Width(); x++ {
 		for y := p.Height() - 1; y > 1; y-- {
-			if p.Cells[y][x] == Empty {
+			if p.Cells[y][x] == Empty || p.Cells[y][x] == Remove {
 				break
 			}
 			if p.Cells[y][x] == p.Cells[y-1][x] && p.Cells[y-1][x] == p.Cells[y-2][x] {
@@ -79,7 +79,7 @@ func (p *Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 	for y := p.Height() - 1; y > 1; y-- {
 		// Checks for tiles to be removed in diagonal / lines
 		for x := 0; x < p.Width()-2 && y > 1; x++ {
-			if p.Cells[y][x] == Empty {
+			if p.Cells[y][x] == Empty || p.Cells[y][x] == Remove {
 				continue
 			}
 			if p.Cells[y][x] == p.Cells[y-1][x+1] && p.Cells[y-1][x+1] == p.Cells[y-2][x+2] {

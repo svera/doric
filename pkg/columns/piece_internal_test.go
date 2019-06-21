@@ -1,6 +1,7 @@
 package columns
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/svera/doric/pkg/columns/mocks"
@@ -53,5 +54,14 @@ func TestMovement(t *testing.T) {
 	p.Down()
 	if p.y != 0 {
 		t.Errorf("Piece should not move down if cell pit below is not empty")
+	}
+}
+
+func TestRotate(t *testing.T) {
+	p := &Piece{tiles: [3]int{1, 2, 3}}
+	expected := [3]int{3, 1, 2}
+	p.Rotate()
+	if !reflect.DeepEqual(p.Tiles(), expected) {
+		t.Errorf("Expected %v, got %v", expected, p.Tiles())
 	}
 }

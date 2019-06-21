@@ -7,6 +7,7 @@ import (
 // Events thrown by the game
 const (
 	Scored = iota
+	Renewed
 	Finished
 )
 
@@ -78,8 +79,9 @@ func (g *Game) Play(events chan<- int) {
 				}
 			}
 			g.combo = 1
-			g.current.Copy(g.next)
+			g.current.copy(g.next)
 			g.next.randomize(g.rand)
+			events <- Renewed
 			if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 				ticker.Stop()
 				g.gameOver = true
