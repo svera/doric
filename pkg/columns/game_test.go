@@ -40,12 +40,32 @@ func TestPit(t *testing.T) {
 }
 
 func TestLevel(t *testing.T) {
-	pit := columns.NewPit(pitHeight, pithWidth)
+	pit := columns.NewPit(2, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0}}
 	game := columns.NewGame(pit, r)
-	if game.Level() != 1 {
-		t.Errorf("Level should be 1, got %d", game.Level())
+	events := make(chan int)
+	pit.Cells[1][0] = 1
+	pit.Cells[1][1] = 1
+	pit.Cells[1][2] = 1
+	pit.Cells[1][3] = 1
+	pit.Cells[1][4] = 1
+	pit.Cells[1][5] = 1
+	pit.Cells[0][0] = 1
+	pit.Cells[0][1] = 1
+	pit.Cells[0][2] = 1
+
+	go game.Play(events)
+
+	select {
+	case ev := <-events:
+		if ev == columns.Scored {
+			if game.Level() == 2 {
+				return
+			}
+		}
 	}
+
+	t.Errorf("Level should be 2, got %d", game.Level())
 }
 
 func TestScore(t *testing.T) {
