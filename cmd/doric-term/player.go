@@ -8,49 +8,52 @@ import (
 // Player handles game's interactions in the game, like moving the piece currently falling in the pit
 type Player struct {
 	*tl.Entity
-	game      *columns.Game
-	offsetX   int
-	offsetY   int
-	message   tl.Drawable
-	startGame func()
+	Status  int
+	Current *columns.Piece
+	Action  chan<- int
+	offsetX int
+	offsetY int
+	message tl.Drawable
+	//startGame func()
 }
 
 // NewPlayer returns a new Player instance
-func NewPlayer(p *columns.Game, startGame func(), message tl.Drawable, offsetX int, offsetY int) *Player {
+func NewPlayer(c *columns.Piece, action chan<- int, message tl.Drawable, offsetX int, offsetY int) *Player {
 	return &Player{
-		game:      p,
-		offsetX:   offsetX,
-		offsetY:   offsetY,
-		message:   message,
-		startGame: startGame,
+		Current: c,
+		Action:  action,
+		offsetX: offsetX,
+		offsetY: offsetY,
+		message: message,
+		//startGame: startGame,
 	}
 }
 
 // Draw draws the piece on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
-	if p.game.IsPaused() {
+	if p.Status == columns.StatusPaused {
 		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
-	if p.game.IsGameOver() {
+	if p.Status == columns.StatusFinished {
 		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
 		p.message.(*tl.Text).SetText("GAME  OVER")
 		return
 	}
 	p.message.(*tl.Text).SetText("")
-	for i := range p.game.Current().Tiles() {
-		if i > p.game.Current().Y() {
+	for i := range p.Current.Tiles() {
+		if i > p.Current.Y() {
 			continue
 		}
-		screen.RenderCell(p.game.Current().X()*2+p.offsetX+1, p.game.Current().Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.game.Current().Tiles()[i]],
+		screen.RenderCell(p.Current.X()*2+p.offsetX+1, p.Current.Y()+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.Current.Tiles()[i]],
 			Fg: tl.ColorBlack,
 			Ch: '[',
 		})
-		screen.RenderCell(p.game.Current().X()*2+p.offsetX+2, p.game.Current().Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.game.Current().Tiles()[i]],
+		screen.RenderCell(p.Current.X()*2+p.offsetX+2, p.Current.Y()+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.Current.Tiles()[i]],
 			Fg: tl.ColorBlack,
 			Ch: ']',
 		})
@@ -60,26 +63,26 @@ func (p *Player) Draw(screen *tl.Screen) {
 // Tick handles events and moves the piece accosdingly if requested, as requested by Termloop's Drawable interface
 // as well as the control of the game itself, pausing it
 func (p *Player) Tick(event tl.Event) {
-	if event.Type == tl.EventKey { // Is it a keyboard event?
+	if event.Type == tl.EventKey && p.Status != columns.StatusFinished { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
-			p.game.Current().Right()
+			p.Action <- columns.ActionRight
 		case tl.KeyArrowLeft:
-			p.game.Current().Left()
+			p.Action <- columns.ActionLeft
 		case tl.KeyArrowDown:
-			p.game.Current().Down()
+			p.Action <- columns.ActionDown
 		case tl.KeyTab:
-			p.game.Current().Rotate()
+			p.Action <- columns.ActionRotate
 		case tl.KeySpace:
-			if p.game.IsGameOver() {
-				p.game.Reset()
-				p.startGame()
+			if p.Status == columns.StatusFinished {
+				p.Action <- columns.ActionReset
+				//p.startGame()
 			}
 		}
 
 		switch event.Ch {
 		case 'p', 'P':
-			p.game.Pause()
+			p.Action <- columns.ActionPause
 		}
 	}
 }

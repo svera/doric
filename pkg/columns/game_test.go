@@ -2,6 +2,7 @@ package columns_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/svera/doric/pkg/columns"
 	"github.com/svera/doric/pkg/columns/mocks"
@@ -12,38 +13,45 @@ const (
 	pitHeight = 13
 )
 
+var codeToStatusName = [6]string{
+	"StatusStarted",
+	"StatusUpdated",
+	"StatusScored",
+	"StatusRenewed",
+	"StatusPaused",
+	"StatusFinished",
+}
+
 func TestGameOver(t *testing.T) {
+	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(1, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, r)
-	events := make(chan int)
+	game := columns.NewGame(pit, current, next, r)
+	updates := make(chan columns.Update)
+	input := make(chan int)
 	pit.Cells[0][3] = 1
-	go game.Play(events)
+	go game.Play(input, updates)
 	select {
-	case ev := <-events:
-		if ev == columns.Finished {
+	case upd := <-updates:
+		if upd.Status == columns.StatusFinished {
 			break
 		}
-	}
-	if !game.IsGameOver() {
+	case <-timeout:
 		t.Errorf("Game should be over")
 	}
 }
 
-func TestPit(t *testing.T) {
-	pit := columns.NewPit(pitHeight, pithWidth)
-	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, r)
-	if game.Pit() != pit {
-		t.Errorf("Pit not returned")
-	}
-}
-
 func TestLevel(t *testing.T) {
+	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(2, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, r)
-	events := make(chan int)
+	game := columns.NewGame(pit, current, next, r)
+	updates := make(chan columns.Update)
+	input := make(chan int)
 	pit.Cells[1][0] = 1
 	pit.Cells[1][1] = 1
 	pit.Cells[1][2] = 1
@@ -54,82 +62,99 @@ func TestLevel(t *testing.T) {
 	pit.Cells[0][1] = 1
 	pit.Cells[0][2] = 1
 
-	go game.Play(events)
+	go game.Play(input, updates)
 
 	select {
-	case ev := <-events:
-		if ev == columns.Scored {
-			if game.Level() == 2 {
+	case upd := <-updates:
+		if upd.Status == columns.StatusScored {
+			if upd.Level == 2 {
 				return
 			}
 		}
+	case <-timeout:
+		t.Errorf("Level should be 2")
 	}
-
-	t.Errorf("Level should be 2, got %d", game.Level())
 }
 
 func TestScore(t *testing.T) {
+	timeout := time.After(3 * time.Second)
 	pit := columns.NewPit(3, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2, 3, 4, 5}}
-	game := columns.NewGame(pit, r)
-	events := make(chan int)
+	game := columns.NewGame(pit, current, next, r)
+	updates := make(chan columns.Update)
+	input := make(chan int)
 	pit.Cells[1][3] = 1
 	pit.Cells[2][3] = 1
-	go game.Play(events)
+	go game.Play(input, updates)
 
 	select {
-	case ev := <-events:
-		if ev == columns.Scored {
-			if game.Score() != 30 {
-				t.Errorf("Score should be 30, got %d", game.Score())
+	case upd := <-updates:
+		if upd.Status == columns.StatusScored {
+			if upd.Points != 30 {
+				t.Errorf("Score should be 30, got %d", upd.Points)
 			}
 		}
+	case <-timeout:
+		t.Errorf("Test timed out")
 	}
+
 	select {
-	case ev := <-events:
-		if ev == columns.Renewed {
+	case upd := <-updates:
+		if upd.Status == columns.StatusRenewed {
 			expectedTiles := [3]int{4, 5, 6}
-			if game.Current().Tiles() != expectedTiles {
+			if upd.Current.Tiles() != expectedTiles {
 				t.Errorf(
 					"Expected that the next piece was copied to the current one with values %v, got %v",
 					expectedTiles,
-					game.Current().Tiles(),
+					upd.Current.Tiles(),
 				)
 			}
 			return
 		}
-	}
-
-	t.Errorf("Score event should have been sent and current piece should have been renewed")
-}
-
-func TestCurrent(t *testing.T) {
-	pit := columns.NewPit(pitHeight, pithWidth)
-	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	game := columns.NewGame(pit, r)
-	if game.Current().Tiles() != [3]int{1, 2, 3} {
-		t.Errorf("Current piece not returned")
-	}
-}
-
-func TestNext(t *testing.T) {
-	pit := columns.NewPit(pitHeight, pithWidth)
-	r := &mocks.Randomizer{Values: []int{5, 5, 5, 0, 1, 2}}
-	game := columns.NewGame(pit, r)
-	if game.Next().Tiles() != [3]int{1, 2, 3} {
-		t.Errorf("Next piece not returned")
+	case <-timeout:
+		t.Errorf("Test timed out")
 	}
 }
 
 func TestPause(t *testing.T) {
+	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{1}}
-	game := columns.NewGame(pit, r)
-	if game.IsPaused() {
-		t.Errorf("Game shouldn't be in paused state")
+	game := columns.NewGame(pit, current, next, r)
+	updates := make(chan columns.Update)
+	input := make(chan int)
+	go game.Play(input, updates)
+
+	go func() {
+		input <- columns.ActionPause
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Status == columns.StatusPaused {
+			break
+		}
+		t.Errorf("Game must be paused, got '%s'", codeToStatusName[upd.Status])
+	case <-timeout:
+		t.Errorf("Test timed out")
 	}
-	game.Pause()
-	if !game.IsPaused() {
-		t.Errorf("Game should be in paused state")
+
+	go func() {
+		input <- columns.ActionPause
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Status != columns.StatusPaused {
+			break
+		}
+		t.Errorf("Game must not be paused, got '%s'", codeToStatusName[upd.Status])
+	case <-timeout:
+		t.Errorf("Test timed out")
 	}
+
 }
