@@ -52,81 +52,6 @@ func TestGameOver(t *testing.T) {
 	}
 }
 
-func TestLevel(t *testing.T) {
-	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(2, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
-	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, *current, *next, r, getConfig())
-	updates := make(chan columns.Update)
-	input := make(chan int)
-	pit[1][0] = 1
-	pit[1][1] = 1
-	pit[1][2] = 1
-	pit[1][3] = 1
-	pit[1][4] = 1
-	pit[1][5] = 1
-	pit[0][0] = 1
-	pit[0][1] = 1
-	pit[0][2] = 1
-
-	go game.Play(input, updates)
-
-	select {
-	case upd := <-updates:
-		if upd.Status == columns.StatusScored {
-			if upd.Level == 2 {
-				return
-			}
-		}
-	case <-timeout:
-		t.Errorf("Level should be 2")
-	}
-}
-
-func TestScore(t *testing.T) {
-	timeout := time.After(3 * time.Second)
-	pit := columns.NewPit(3, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
-	r := &mocks.Randomizer{Values: []int{0, 1, 2, 3, 4, 5}}
-	game := columns.NewGame(pit, *current, *next, r, getConfig())
-	updates := make(chan columns.Update)
-	input := make(chan int)
-	pit[1][3] = 1
-	pit[2][3] = 1
-	go game.Play(input, updates)
-
-	select {
-	case upd := <-updates:
-		if upd.Status == columns.StatusScored {
-			if upd.Points != 30 {
-				t.Errorf("Score should be 30, got %d", upd.Points)
-			}
-		}
-	case <-timeout:
-		t.Errorf("Test timed out")
-	}
-
-	select {
-	case upd := <-updates:
-		if upd.Status == columns.StatusRenewed {
-			expectedTiles := [3]int{4, 5, 6}
-			if upd.Current.Tiles() != expectedTiles {
-				t.Errorf(
-					"Expected that the next piece was copied to the current one with values %v, got %v",
-					expectedTiles,
-					upd.Current.Tiles(),
-				)
-			}
-			return
-		}
-	case <-timeout:
-		t.Errorf("Test timed out")
-	}
-}
-
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
@@ -275,17 +200,23 @@ func TestScored(t *testing.T) {
 	scoredTests := []struct {
 		name                    string
 		numberTilesForNextLevel int
+		expectedScore           int
 		expectedLevel           int
+		expectedTiles           [3]int
 	}{
 		{
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 10,
+			expectedScore:           30,
 			expectedLevel:           1,
+			expectedTiles:           [3]int{4, 5, 6},
 		},
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
+			expectedScore:           30,
 			expectedLevel:           2,
+			expectedTiles:           [3]int{4, 5, 6},
 		},
 	}
 
@@ -295,10 +226,10 @@ func TestScored(t *testing.T) {
 			pit := columns.NewPit(3, pithWidth)
 			current := columns.NewPiece(pit)
 			next := columns.NewPiece(pit)
-			r := &mocks.Randomizer{Values: []int{0, 0, 0}}
+			r := &mocks.Randomizer{Values: []int{0, 0, 0, 3, 4, 5}}
 			cfg := getConfig()
 			cfg.Frequency = 1 * time.Millisecond
-			cfg.InitialSlowdown = 1
+			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			game := columns.NewGame(pit, *current, *next, r, cfg)
 			updates := make(chan columns.Update)
@@ -309,14 +240,26 @@ func TestScored(t *testing.T) {
 				select {
 				case upd := <-updates:
 					if upd.Status == columns.StatusScored {
-						if upd.Points == 0 {
-							t.Errorf("Scored points but score not updated")
+						if upd.Points != tt.expectedScore {
+							t.Errorf("Expected %d points but got %d", tt.expectedScore, upd.Points)
 						}
 						if upd.Level != tt.expectedLevel {
 							t.Errorf("Expected level %d but got %d", tt.expectedLevel, upd.Level)
 						}
 						return
 					}
+
+					if upd.Status == columns.StatusRenewed {
+						if upd.Current.Tiles() != tt.expectedTiles {
+							t.Errorf(
+								"Expected that the next piece was copied to the current one with values %v, got %v",
+								tt.expectedTiles,
+								upd.Current.Tiles(),
+							)
+						}
+						return
+					}
+
 				case <-timeout:
 					t.Fatalf("Test timed out and no scored update reached")
 				}
