@@ -8,13 +8,13 @@ import (
 // Pit represents a pit on screen following Termloop's Drawable interface
 type Pit struct {
 	*tl.Entity
-	Pit     *columns.Pit
+	Pit     columns.Pit
 	offsetX int
 	offsetY int
 }
 
 // NewPit returns a new pit instance
-func NewPit(p *columns.Pit, offsetX int, offsetY int) *Pit {
+func NewPit(p columns.Pit, offsetX int, offsetY int) *Pit {
 	return &Pit{
 		Pit:     p,
 		Entity:  tl.NewEntity(offsetX, offsetY, p.Width(), p.Height()),

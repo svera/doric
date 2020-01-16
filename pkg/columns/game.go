@@ -26,7 +26,7 @@ const (
 const (
 	pointsPerTile           = 10
 	numberTilesForNextLevel = 10
-	// As the game loop running frequency every 200ms, an initialSlowdown of 8 means that pieces fall
+	// As the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
 	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
 	initialSlowdown = 10
@@ -47,7 +47,7 @@ type Update struct {
 type Game struct {
 	current  *Piece
 	next     *Piece
-	pit      *Pit
+	pit      Pit
 	points   int
 	combo    int
 	slowdown int
@@ -57,11 +57,11 @@ type Game struct {
 }
 
 // NewGame returns a new Game instance
-func NewGame(p *Pit, current *Piece, next *Piece, r Randomizer) *Game {
+func NewGame(p Pit, current Piece, next Piece, r Randomizer) *Game {
 	g := &Game{
 		pit:     p,
-		current: current,
-		next:    next,
+		current: &current,
+		next:    &next,
 		level:   1,
 		rand:    r,
 	}
@@ -165,7 +165,7 @@ func (g *Game) sendUpdate(updates chan<- Update, status int) {
 	updates <- Update{
 		Current: *g.current,
 		Next:    *g.next,
-		Pit:     *g.pit,
+		Pit:     g.pit,
 		Points:  g.points,
 		Combo:   g.combo,
 		Status:  status,

@@ -12,11 +12,11 @@ type Randomizer interface {
 type Piece struct {
 	tiles [3]int
 	Coords
-	pit *Pit
+	pit Pit
 }
 
 // NewPiece returns a new Piece instance
-func NewPiece(pit *Pit) *Piece {
+func NewPiece(pit Pit) *Piece {
 	return &Piece{
 		tiles: [3]int{},
 		pit:   pit,

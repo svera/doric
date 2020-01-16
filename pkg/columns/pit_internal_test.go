@@ -7,7 +7,7 @@ import (
 
 func TestMarkLinesToRemove(t *testing.T) {
 	p := NewPit(13, 6)
-	p.Cells = [][]int{
+	p = Pit{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -22,7 +22,7 @@ func TestMarkLinesToRemove(t *testing.T) {
 		{1, 1, 1, 1, 1, 1},
 		{1, 1, 0, 1, 1, 1},
 	}
-	expected := [][]int{
+	expected := Pit{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -38,14 +38,14 @@ func TestMarkLinesToRemove(t *testing.T) {
 		{1, -1, 0, -1, -1, -1},
 	}
 	p.markTilesToRemove()
-	if !reflect.DeepEqual(p.Cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.Cells)
+	if !reflect.DeepEqual(p, expected) {
+		t.Errorf("Expected %v, got %v", expected, p)
 	}
 }
 
 func TestMarkLinesToRemoveDiagonal(t *testing.T) {
 	p := NewPit(13, 6)
-	p.Cells = [][]int{
+	p = Pit{
 		{1, 0, 0, 0, 0, 1},
 		{0, 1, 0, 0, 1, 0},
 		{0, 0, 1, 1, 0, 0},
@@ -60,7 +60,7 @@ func TestMarkLinesToRemoveDiagonal(t *testing.T) {
 		{0, 1, 0, 0, 1, 0},
 		{0, 0, 1, 1, 0, 0},
 	}
-	expected := [][]int{
+	expected := Pit{
 		{-1, 0, 0, 0, 0, -1},
 		{0, -1, 0, 0, -1, 0},
 		{0, 0, -1, -1, 0, 0},
@@ -76,13 +76,13 @@ func TestMarkLinesToRemoveDiagonal(t *testing.T) {
 		{0, 0, -1, -1, 0, 0},
 	}
 	p.markTilesToRemove()
-	if !reflect.DeepEqual(p.Cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.Cells)
+	if !reflect.DeepEqual(p, expected) {
+		t.Errorf("Expected %v, got %v", expected, p)
 	}
 }
 func TestSettle(t *testing.T) {
 	p := NewPit(13, 6)
-	p.Cells = [][]int{
+	p = Pit{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -97,7 +97,7 @@ func TestSettle(t *testing.T) {
 		{-1, -1, -1, 0, 0, 1},
 		{1, 2, 3, 1, 4, 1},
 	}
-	expected := [][]int{
+	expected := Pit{
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0},
@@ -113,7 +113,7 @@ func TestSettle(t *testing.T) {
 		{1, 2, 3, 1, 4, 1},
 	}
 	p.settle()
-	if !reflect.DeepEqual(p.Cells, expected) {
-		t.Errorf("Expected %v, got %v", expected, p.Cells)
+	if !reflect.DeepEqual(p, expected) {
+		t.Errorf("Expected %v, got %v", expected, p)
 	}
 }

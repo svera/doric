@@ -24,7 +24,7 @@ func TestMovement(t *testing.T) {
 		t.Errorf("Piece should move to the left if isn't in pit's first column")
 	}
 	p.x = 2
-	p.pit.Cells[0][1] = 1
+	p.pit[0][1] = 1
 	p.Left()
 	if p.x != 2 {
 		t.Errorf("Piece should not move to the left if that pit cell is not empty")
@@ -40,7 +40,7 @@ func TestMovement(t *testing.T) {
 		t.Errorf("Piece should move to the right if isn't in pit's last column")
 	}
 	p.x = 2
-	p.pit.Cells[0][3] = 1
+	p.pit[0][3] = 1
 	p.Right()
 	if p.x != 2 {
 		t.Errorf("Piece should not move to the right if that pit cell is not empty")
@@ -52,7 +52,7 @@ func TestMovement(t *testing.T) {
 	}
 	p.y = 0
 	p.x = 2
-	p.pit.Cells[1][2] = 1
+	p.pit[1][2] = 1
 	p.Down()
 	if p.y != 0 {
 		t.Errorf("Piece should not move down if cell pit below is not empty")

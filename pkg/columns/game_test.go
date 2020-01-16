@@ -28,10 +28,10 @@ func TestGameOver(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, current, next, r)
+	game := columns.NewGame(pit, *current, *next, r)
 	updates := make(chan columns.Update)
 	input := make(chan int)
-	pit.Cells[0][3] = 1
+	pit[0][3] = 1
 	go game.Play(input, updates)
 	select {
 	case upd := <-updates:
@@ -49,18 +49,18 @@ func TestLevel(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, current, next, r)
+	game := columns.NewGame(pit, *current, *next, r)
 	updates := make(chan columns.Update)
 	input := make(chan int)
-	pit.Cells[1][0] = 1
-	pit.Cells[1][1] = 1
-	pit.Cells[1][2] = 1
-	pit.Cells[1][3] = 1
-	pit.Cells[1][4] = 1
-	pit.Cells[1][5] = 1
-	pit.Cells[0][0] = 1
-	pit.Cells[0][1] = 1
-	pit.Cells[0][2] = 1
+	pit[1][0] = 1
+	pit[1][1] = 1
+	pit[1][2] = 1
+	pit[1][3] = 1
+	pit[1][4] = 1
+	pit[1][5] = 1
+	pit[0][0] = 1
+	pit[0][1] = 1
+	pit[0][2] = 1
 
 	go game.Play(input, updates)
 
@@ -82,11 +82,11 @@ func TestScore(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2, 3, 4, 5}}
-	game := columns.NewGame(pit, current, next, r)
+	game := columns.NewGame(pit, *current, *next, r)
 	updates := make(chan columns.Update)
 	input := make(chan int)
-	pit.Cells[1][3] = 1
-	pit.Cells[2][3] = 1
+	pit[1][3] = 1
+	pit[2][3] = 1
 	go game.Play(input, updates)
 
 	select {
@@ -124,7 +124,7 @@ func TestPause(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{1}}
-	game := columns.NewGame(pit, current, next, r)
+	game := columns.NewGame(pit, *current, *next, r)
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	go game.Play(input, updates)
@@ -153,6 +153,75 @@ func TestPause(t *testing.T) {
 			break
 		}
 		t.Errorf("Game must not be paused, got '%s'", codeToStatusName[upd.Status])
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+}
+
+func TestInput(t *testing.T) {
+	timeout := time.After(1 * time.Second)
+	pit := columns.NewPit(pitHeight, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
+	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	game := columns.NewGame(pit, *current, *next, r)
+	updates := make(chan columns.Update)
+	input := make(chan int)
+	go game.Play(input, updates)
+
+	go func() {
+		input <- columns.ActionLeft
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Current.X() == 2 {
+			break
+		}
+		t.Errorf("Current piece must be at column %d but is at %d", 2, upd.Current.X())
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	go func() {
+		input <- columns.ActionRight
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Current.X() == 3 {
+			break
+		}
+		t.Errorf("Current piece must be at column %d but is at %d", 3, upd.Current.X())
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	go func() {
+		input <- columns.ActionDown
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Current.Y() == 1 {
+			break
+		}
+		t.Errorf("Current piece must be at row %d but is at %d", 1, upd.Current.Y())
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	go func() {
+		input <- columns.ActionRotate
+	}()
+
+	select {
+	case upd := <-updates:
+		if upd.Current.Tiles() == [3]int{3, 1, 2} {
+			break
+		}
+		t.Errorf("Current piece must be as %v but is as %v", [3]int{3, 1, 2}, upd.Current.Tiles())
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}

@@ -30,7 +30,7 @@ func main() {
 	next := columns.NewPiece(pit)
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	game = columns.NewGame(pit, current, next, r)
+	game = columns.NewGame(pit, *current, *next, r)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)
@@ -76,14 +76,14 @@ func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, next
 				if ev.Status == columns.StatusScored {
 					score.SetText(fmt.Sprintf("Score: %d", ev.Points))
 					level.SetText(fmt.Sprintf("Level: %d", ev.Level))
-					pitEntity.Pit = &ev.Pit
+					pitEntity.Pit = ev.Pit
 					playerEntity.Status = ev.Status
 				}
 				if ev.Status == columns.StatusPaused {
 					playerEntity.Status = columns.StatusPaused
 				}
 				if ev.Status == columns.StatusUpdated {
-					pitEntity.Pit = &ev.Pit
+					pitEntity.Pit = ev.Pit
 					playerEntity.Current = &ev.Current
 					playerEntity.Status = ev.Status
 				}
