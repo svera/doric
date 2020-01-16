@@ -127,8 +127,10 @@ func (g *Game) Play(input <-chan int, updates chan<- Update) {
 					g.points += removed * g.combo * g.cfg.PointsPerTile
 					g.combo++
 					removed = g.pit.markTilesToRemove()
-					if g.slowdown > 1 && totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
+					if g.slowdown > 1 {
 						g.slowdown--
+					}
+					if totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 						g.level++
 					}
 					g.sendUpdate(updates, StatusScored)

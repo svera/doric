@@ -272,30 +272,56 @@ func TestConsolidated(t *testing.T) {
 }
 
 func TestScored(t *testing.T) {
-	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(3, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
-	r := &mocks.Randomizer{Values: []int{0, 0, 0}}
-	cfg := getConfig()
-	cfg.Frequency = 1 * time.Millisecond
-	cfg.InitialSlowdown = 1
-	game := columns.NewGame(pit, *current, *next, r, cfg)
-	updates := make(chan columns.Update)
-	input := make(chan int)
-	go game.Play(input, updates)
-
-	for {
-		select {
-		case upd := <-updates:
-			if upd.Status == columns.StatusScored {
-				if upd.Points == 0 {
-					t.Errorf("Scored points but score not updated")
-				}
-				return
-			}
-		case <-timeout:
-			t.Fatalf("Test timed out and no scored update reached")
-		}
+	scoredTests := []struct {
+		name                    string
+		numberTilesForNextLevel int
+		expectedLevel           int
+	}{
+		{
+			name:                    "Scored with no level up",
+			numberTilesForNextLevel: 10,
+			expectedLevel:           1,
+		},
+		{
+			name:                    "Scored with level up",
+			numberTilesForNextLevel: 1,
+			expectedLevel:           2,
+		},
 	}
+
+	for _, tt := range scoredTests {
+		t.Run(tt.name, func(t *testing.T) {
+			timeout := time.After(1 * time.Second)
+			pit := columns.NewPit(3, pithWidth)
+			current := columns.NewPiece(pit)
+			next := columns.NewPiece(pit)
+			r := &mocks.Randomizer{Values: []int{0, 0, 0}}
+			cfg := getConfig()
+			cfg.Frequency = 1 * time.Millisecond
+			cfg.InitialSlowdown = 1
+			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
+			game := columns.NewGame(pit, *current, *next, r, cfg)
+			updates := make(chan columns.Update)
+			input := make(chan int)
+			go game.Play(input, updates)
+
+			for {
+				select {
+				case upd := <-updates:
+					if upd.Status == columns.StatusScored {
+						if upd.Points == 0 {
+							t.Errorf("Scored points but score not updated")
+						}
+						if upd.Level != tt.expectedLevel {
+							t.Errorf("Expected level %d but got %d", tt.expectedLevel, upd.Level)
+						}
+						return
+					}
+				case <-timeout:
+					t.Fatalf("Test timed out and no scored update reached")
+				}
+			}
+		})
+	}
+
 }
