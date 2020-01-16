@@ -22,6 +22,13 @@ var score *tl.Text
 var level *tl.Text
 
 func main() {
+	cfg := columns.Config{
+		PointsPerTile:           10,
+		NumberTilesForNextLevel: 10,
+		InitialSlowdown:         10,
+		Frequency:               200,
+	}
+
 	actions := make(chan int)
 	app := tl.NewGame()
 	app.Screen().SetFps(60)
@@ -30,7 +37,7 @@ func main() {
 	next := columns.NewPiece(pit)
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	game = columns.NewGame(pit, *current, *next, r)
+	game = columns.NewGame(pit, *current, *next, r, cfg)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)

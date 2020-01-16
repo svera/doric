@@ -1,6 +1,7 @@
 package columns_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -13,13 +14,21 @@ const (
 	pitHeight = 13
 )
 
-var codeToStatusName = [6]string{
-	"StatusStarted",
+var codeToStatusName = [5]string{
 	"StatusUpdated",
 	"StatusScored",
 	"StatusRenewed",
 	"StatusPaused",
 	"StatusFinished",
+}
+
+func getConfig() columns.Config {
+	return columns.Config{
+		PointsPerTile:           10,
+		NumberTilesForNextLevel: 10,
+		InitialSlowdown:         10,
+		Frequency:               200 * time.Millisecond,
+	}
 }
 
 func TestGameOver(t *testing.T) {
@@ -28,7 +37,7 @@ func TestGameOver(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, *current, *next, r)
+	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	pit[0][3] = 1
@@ -49,7 +58,7 @@ func TestLevel(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game := columns.NewGame(pit, *current, *next, r)
+	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	pit[1][0] = 1
@@ -82,7 +91,7 @@ func TestScore(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2, 3, 4, 5}}
-	game := columns.NewGame(pit, *current, *next, r)
+	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	pit[1][3] = 1
@@ -124,7 +133,7 @@ func TestPause(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{1}}
-	game := columns.NewGame(pit, *current, *next, r)
+	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	go game.Play(input, updates)
@@ -165,7 +174,7 @@ func TestInput(t *testing.T) {
 	current := columns.NewPiece(pit)
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	game := columns.NewGame(pit, *current, *next, r)
+	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	updates := make(chan columns.Update)
 	input := make(chan int)
 	go game.Play(input, updates)
@@ -226,4 +235,67 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
+}
+
+func TestConsolidated(t *testing.T) {
+	timeout := time.After(1 * time.Second)
+	pit := columns.NewPit(3, pithWidth)
+	initialPit := columns.NewPit(3, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
+	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	cfg := getConfig()
+	cfg.Frequency = 1 * time.Millisecond
+	cfg.InitialSlowdown = 1
+	game := columns.NewGame(pit, *current, *next, r, cfg)
+	updates := make(chan columns.Update)
+	input := make(chan int)
+	go game.Play(input, updates)
+
+	for {
+		select {
+		case upd := <-updates:
+			if upd.Status == columns.StatusRenewed {
+				if reflect.DeepEqual(initialPit, upd.Pit) {
+					t.Errorf("Previous piece wasn't consolidated in pit")
+				}
+				if reflect.DeepEqual(current, upd.Current) {
+					t.Errorf("Current piece wasn't renewed")
+				}
+				return
+			}
+		case <-timeout:
+			t.Errorf("Test timed out and current piece wasn't renewed")
+		}
+	}
+
+}
+
+func TestScored(t *testing.T) {
+	timeout := time.After(1 * time.Second)
+	pit := columns.NewPit(3, pithWidth)
+	current := columns.NewPiece(pit)
+	next := columns.NewPiece(pit)
+	r := &mocks.Randomizer{Values: []int{0, 0, 0}}
+	cfg := getConfig()
+	cfg.Frequency = 1 * time.Millisecond
+	cfg.InitialSlowdown = 1
+	game := columns.NewGame(pit, *current, *next, r, cfg)
+	updates := make(chan columns.Update)
+	input := make(chan int)
+	go game.Play(input, updates)
+
+	for {
+		select {
+		case upd := <-updates:
+			if upd.Status == columns.StatusScored {
+				if upd.Points == 0 {
+					t.Errorf("Scored points but score not updated")
+				}
+				return
+			}
+		case <-timeout:
+			t.Fatalf("Test timed out and no scored update reached")
+		}
+	}
 }

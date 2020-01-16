@@ -23,16 +23,18 @@ const (
 	ActionPause
 )
 
-const (
-	pointsPerTile           = 10
-	numberTilesForNextLevel = 10
+// Config holds different parameters related with the game
+type Config struct {
+	PointsPerTile           int
+	NumberTilesForNextLevel int
 	// As the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
 	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
-	initialSlowdown = 10
-	frequency       = 200
-)
+	InitialSlowdown int
+	Frequency       time.Duration
+}
 
+// Update contains the status of the game to be consumed by a client
 type Update struct {
 	Current Piece
 	Next    Piece
@@ -54,16 +56,18 @@ type Game struct {
 	paused   bool
 	level    int
 	rand     Randomizer
+	cfg      Config
 }
 
 // NewGame returns a new Game instance
-func NewGame(p Pit, current Piece, next Piece, r Randomizer) *Game {
+func NewGame(p Pit, current Piece, next Piece, r Randomizer, cfg Config) *Game {
 	g := &Game{
 		pit:     p,
 		current: &current,
 		next:    &next,
 		level:   1,
 		rand:    r,
+		cfg:     cfg,
 	}
 	g.Reset()
 	return g
@@ -72,7 +76,7 @@ func NewGame(p Pit, current Piece, next Piece, r Randomizer) *Game {
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
 func (g *Game) Play(input <-chan int, updates chan<- Update) {
-	ticker := time.NewTicker(frequency * time.Millisecond)
+	ticker := time.NewTicker(g.cfg.Frequency)
 	ticks := 0
 	totalRemoved := 0
 
@@ -120,10 +124,10 @@ func (g *Game) Play(input <-chan int, updates chan<- Update) {
 				for removed > 0 {
 					totalRemoved += removed
 					g.pit.settle()
-					g.points += removed * g.combo * pointsPerTile
+					g.points += removed * g.combo * g.cfg.PointsPerTile
 					g.combo++
 					removed = g.pit.markTilesToRemove()
-					if g.slowdown > 1 && totalRemoved/numberTilesForNextLevel > g.level-1 {
+					if g.slowdown > 1 && totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 						g.slowdown--
 						g.level++
 					}
@@ -153,7 +157,7 @@ func (g *Game) pause() {
 func (g *Game) Reset() {
 	g.pit.reset()
 	g.combo = 1
-	g.slowdown = initialSlowdown
+	g.slowdown = g.cfg.InitialSlowdown
 	g.points = 0
 	g.current.reset(g.rand)
 	g.next.randomize(g.rand)
