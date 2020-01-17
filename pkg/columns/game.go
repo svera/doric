@@ -25,13 +25,16 @@ const (
 
 // Config holds different parameters related with the game
 type Config struct {
-	PointsPerTile           int
+	// How many points each destroyed tile awards the player
+	PointsPerTile int
+	// How many tiles a player has to destroy to advance to the next level
 	NumberTilesForNextLevel int
 	// As the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
 	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
 	InitialSlowdown int
-	Frequency       time.Duration
+	// Frequency to check for tiles to remove, piece changing, etc.
+	Frequency time.Duration
 }
 
 // Update contains the status of the game to be consumed by a client
@@ -88,19 +91,16 @@ func (g *Game) Play(input <-chan int, updates chan<- Update) {
 		select {
 		case act := <-input:
 			status := StatusUpdated
-			if act == ActionLeft {
+			switch act {
+			case ActionLeft:
 				g.current.Left()
-			}
-			if act == ActionRight {
+			case ActionRight:
 				g.current.Right()
-			}
-			if act == ActionDown {
+			case ActionDown:
 				g.current.Down()
-			}
-			if act == ActionRotate {
+			case ActionRotate:
 				g.current.Rotate()
-			}
-			if act == ActionPause {
+			case ActionPause:
 				g.pause()
 				if g.paused {
 					status = StatusPaused

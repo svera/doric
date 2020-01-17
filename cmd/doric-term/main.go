@@ -26,7 +26,7 @@ func main() {
 		PointsPerTile:           10,
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         10,
-		Frequency:               200,
+		Frequency:               200 * time.Millisecond,
 	}
 
 	actions := make(chan int)

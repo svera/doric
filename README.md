@@ -17,26 +17,50 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
     import "github.com/svera/doric/pkg/columns"
 
     func main() {
-        events := make(chan int)
+        cfg := columns.Config{
+            PointsPerTile:           10,
+            NumberTilesForNextLevel: 10,
+            InitialSlowdown:         10,
+            Frequency:               200 * time.Millisecond,
+        }        
+        input := make(chan int)
+        updates := make(chan columns.Update)
         pit := columns.NewPit(13, 6)
-        player := columns.NewPlayer(pit)
-        // Start the game and return game events in the events channel
-        go player.Play(events)
+        current := columns.NewPiece(pit)
+    	next := columns.NewPiece(pit)
+        source := rand.NewSource(time.Now().UnixNano())
+        rnd := rand.New(source)
+        
+        game := columns.NewGame(pit, current, next, rnd, cfg)
+        // Start the game and return game updates in the updates channel
+        go game.Play(input, updates)
 
         // Here you would need to start the game loop, manage input,
         // show graphics on screen, etc.
 
-        // Listen for game events and act accordingly
+        // Listen for game updates and act accordingly
         go func() {
+            defer func() {
+			    close(input)
+		    }()
             for {
                 select {
-                case ev := <-events:
-                    if ev == columns.Finished {
+                case upd := <-updates:
+                    if upd.Status == columns.StatusFinished {
                         // Do whatever
                         return
                     }
-                    if ev == columns.Scored {
+                    if upd.Status == columns.StatusScored {
                         // Do whatever
+                    }
+                    if ev.Status == columns.StatusPaused {
+                            // Do whatever
+                    }
+                    if ev.Status == columns.StatusUpdated {
+                            // Do whatever
+                    }
+                    if ev.Status == columns.StatusRenewed {
+                            // Do whatever
                     }
                 }
             }
