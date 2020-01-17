@@ -83,7 +83,7 @@ func (p *Piece) Rotate() {
 }
 
 // Tiles returns Piece's tiles
-func (p Piece) Tiles() [3]int {
+func (p *Piece) Tiles() [3]int {
 	return p.tiles
 }
 

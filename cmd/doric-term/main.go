@@ -66,8 +66,8 @@ func setUpMainLevel(pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next,
 func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next, message *tl.Text) {
 	score.SetText(fmt.Sprintf("Score: %d", 0))
 	level.SetText(fmt.Sprintf("Level: %d", 1))
-	updates := make(chan columns.Update)
-	go game.Play(actions, updates)
+	events := make(chan columns.Event)
+	go game.Play(actions, events)
 
 	go func() {
 		defer func() {
@@ -75,28 +75,28 @@ func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, next
 		}()
 		for {
 			select {
-			case ev := <-updates:
-				if ev.Status == columns.StatusFinished {
-					playerEntity.Status = columns.StatusFinished
+			case ev := <-events:
+				if ev.ID == columns.EventFinished {
+					playerEntity.Status = columns.EventFinished
 					return
 				}
-				if ev.Status == columns.StatusScored {
-					score.SetText(fmt.Sprintf("Score: %d", ev.Points))
-					level.SetText(fmt.Sprintf("Level: %d", ev.Level))
-					pitEntity.Pit = ev.Pit
-					playerEntity.Status = ev.Status
+				if ev.ID == columns.EventScored {
+					score.SetText(fmt.Sprintf("Score: %d", ev.Status.Points))
+					level.SetText(fmt.Sprintf("Level: %d", ev.Status.Level))
+					pitEntity.Pit = ev.Status.Pit
+					playerEntity.Status = ev.ID
 				}
-				if ev.Status == columns.StatusPaused {
-					playerEntity.Status = columns.StatusPaused
+				if ev.ID == columns.EventPaused {
+					playerEntity.Status = columns.EventPaused
 				}
-				if ev.Status == columns.StatusUpdated {
-					pitEntity.Pit = ev.Pit
-					playerEntity.Current = &ev.Current
-					playerEntity.Status = ev.Status
+				if ev.ID == columns.EventUpdated {
+					pitEntity.Pit = ev.Status.Pit
+					playerEntity.Current = &ev.Status.Current
+					playerEntity.Status = ev.ID
 				}
-				if ev.Status == columns.StatusRenewed {
-					playerEntity.Current = &ev.Current
-					nextPieceEntity.Piece = &ev.Next
+				if ev.ID == columns.EventRenewed {
+					playerEntity.Current = &ev.Status.Current
+					nextPieceEntity.Piece = &ev.Status.Next
 				}
 			}
 		}

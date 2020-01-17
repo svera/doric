@@ -6,11 +6,11 @@ import (
 
 // Events thrown by the game
 const (
-	StatusUpdated = iota
-	StatusScored
-	StatusRenewed
-	StatusPaused
-	StatusFinished
+	EventUpdated = iota
+	EventScored
+	EventRenewed
+	EventPaused
+	EventFinished
 )
 
 // Possible actions coming from the player
@@ -37,15 +37,19 @@ type Config struct {
 	Frequency time.Duration
 }
 
-// Update contains the status of the game to be consumed by a client
-type Update struct {
+type status struct {
 	Current Piece
 	Next    Piece
 	Pit     Pit
 	Points  int
 	Combo   int
-	Status  int
 	Level   int
+}
+
+// Event contains the status of the game to be consumed by a client
+type Event struct {
+	ID     int
+	Status status
 }
 
 // Game implements the game flow, keeping track of game's status for a player
@@ -78,19 +82,19 @@ func NewGame(p Pit, current Piece, next Piece, r Randomizer, cfg Config) *Game {
 
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
-func (g *Game) Play(input <-chan int, updates chan<- Update) {
+func (g *Game) Play(input <-chan int, events chan<- Event) {
 	ticker := time.NewTicker(g.cfg.Frequency)
 	ticks := 0
 	totalRemoved := 0
 
 	defer func() {
-		close(updates)
+		close(events)
 	}()
 
 	for {
 		select {
 		case act := <-input:
-			status := StatusUpdated
+			status := EventUpdated
 			switch act {
 			case ActionLeft:
 				g.current.Left()
@@ -103,18 +107,18 @@ func (g *Game) Play(input <-chan int, updates chan<- Update) {
 			case ActionPause:
 				g.pause()
 				if g.paused {
-					status = StatusPaused
+					status = EventPaused
 				}
 			}
-			g.sendUpdate(updates, status)
+			g.sendUpdate(events, status)
 		case <-ticker.C:
 			if g.paused {
-				g.sendUpdate(updates, StatusPaused)
+				g.sendUpdate(events, EventPaused)
 				continue
 			}
 			if ticks != g.slowdown {
 				ticks++
-				g.sendUpdate(updates, StatusUpdated)
+				g.sendUpdate(events, EventUpdated)
 				continue
 			}
 			ticks = 0
@@ -133,16 +137,16 @@ func (g *Game) Play(input <-chan int, updates chan<- Update) {
 					if totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 						g.level++
 					}
-					g.sendUpdate(updates, StatusScored)
+					g.sendUpdate(events, EventScored)
 				}
 				g.combo = 1
 				g.current.copy(g.next)
 				g.next.randomize(g.rand)
-				g.sendUpdate(updates, StatusRenewed)
+				g.sendUpdate(events, EventRenewed)
 
 				if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 					ticker.Stop()
-					g.sendUpdate(updates, StatusFinished)
+					g.sendUpdate(events, EventFinished)
 					return
 				}
 			}
@@ -167,14 +171,16 @@ func (g *Game) Reset() {
 	g.level = 1
 }
 
-func (g *Game) sendUpdate(updates chan<- Update, status int) {
-	updates <- Update{
-		Current: *g.current,
-		Next:    *g.next,
-		Pit:     g.pit,
-		Points:  g.points,
-		Combo:   g.combo,
-		Status:  status,
-		Level:   g.level,
+func (g *Game) sendUpdate(events chan<- Event, event int) {
+	events <- Event{
+		ID: event,
+		Status: status{
+			Current: *g.current,
+			Next:    *g.next,
+			Pit:     g.pit,
+			Points:  g.points,
+			Combo:   g.combo,
+			Level:   g.level,
+		},
 	}
 }

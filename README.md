@@ -3,7 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/svera/doric)](https://goreportcard.com/report/github.com/svera/doric)
 [![Coverage Status](https://coveralls.io/repos/github/svera/doric/badge.svg?branch=master)](https://coveralls.io/github/svera/doric?branch=master)
 
-A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementation written by Sergio Vera.
+A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementation.
 
 ![Doric screenshot](screenshot.png)
 
@@ -24,7 +24,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
             Frequency:               200 * time.Millisecond,
         }        
         input := make(chan int)
-        updates := make(chan columns.Update)
+        events := make(chan columns.Event)
         pit := columns.NewPit(13, 6)
         current := columns.NewPiece(pit)
     	next := columns.NewPiece(pit)
@@ -32,34 +32,34 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
         rnd := rand.New(source)
         
         game := columns.NewGame(pit, current, next, rnd, cfg)
-        // Start the game and return game updates in the updates channel
-        go game.Play(input, updates)
+        // Start the game and return game events in the events channel
+        go game.Play(input, events)
 
         // Here you would need to start the game loop, manage input,
         // show graphics on screen, etc.
 
-        // Listen for game updates and act accordingly
+        // Listen for game events and act accordingly
         go func() {
             defer func() {
 			    close(input)
 		    }()
             for {
                 select {
-                case upd := <-updates:
-                    if upd.Status == columns.StatusFinished {
+                case ev := <-events:
+                    if ev.ID == columns.EventFinished {
                         // Do whatever
                         return
                     }
-                    if upd.Status == columns.StatusScored {
+                    if ev.ID == columns.EventScored {
                         // Do whatever
                     }
-                    if ev.Status == columns.StatusPaused {
+                    if ev.ID == columns.EventPaused {
                             // Do whatever
                     }
-                    if ev.Status == columns.StatusUpdated {
+                    if ev.ID == columns.EventUpdated {
                             // Do whatever
                     }
-                    if ev.Status == columns.StatusRenewed {
+                    if ev.ID == columns.EventRenewed {
                             // Do whatever
                     }
                 }

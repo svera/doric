@@ -14,12 +14,12 @@ const (
 	pitHeight = 13
 )
 
-var codeToStatusName = [5]string{
-	"StatusUpdated",
-	"StatusScored",
-	"StatusRenewed",
-	"StatusPaused",
-	"StatusFinished",
+var codeToEventName = [5]string{
+	"EventUpdated",
+	"EventScored",
+	"EventRenewed",
+	"EventPaused",
+	"EventFinished",
 }
 
 func getConfig() columns.Config {
@@ -38,13 +38,13 @@ func TestGameOver(t *testing.T) {
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
-	updates := make(chan columns.Update)
+	events := make(chan columns.Event)
 	input := make(chan int)
 	pit[0][3] = 1
-	go game.Play(input, updates)
+	go game.Play(input, events)
 	select {
-	case upd := <-updates:
-		if upd.Status == columns.StatusFinished {
+	case ev := <-events:
+		if ev.ID == columns.EventFinished {
 			break
 		}
 	case <-timeout:
@@ -59,20 +59,20 @@ func TestPause(t *testing.T) {
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{1}}
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
-	updates := make(chan columns.Update)
+	events := make(chan columns.Event)
 	input := make(chan int)
-	go game.Play(input, updates)
+	go game.Play(input, events)
 
 	go func() {
 		input <- columns.ActionPause
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Status == columns.StatusPaused {
+	case ev := <-events:
+		if ev.ID == columns.EventPaused {
 			break
 		}
-		t.Errorf("Game must be paused, got '%s'", codeToStatusName[upd.Status])
+		t.Errorf("Game must be paused, got '%s'", codeToEventName[ev.ID])
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -82,11 +82,11 @@ func TestPause(t *testing.T) {
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Status != columns.StatusPaused {
+	case ev := <-events:
+		if ev.ID != columns.EventPaused {
 			break
 		}
-		t.Errorf("Game must not be paused, got '%s'", codeToStatusName[upd.Status])
+		t.Errorf("Game must not be paused, got '%s'", codeToEventName[ev.ID])
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -100,20 +100,20 @@ func TestInput(t *testing.T) {
 	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
-	updates := make(chan columns.Update)
+	events := make(chan columns.Event)
 	input := make(chan int)
-	go game.Play(input, updates)
+	go game.Play(input, events)
 
 	go func() {
 		input <- columns.ActionLeft
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Current.X() == 2 {
+	case ev := <-events:
+		if ev.Status.Current.X() == 2 {
 			break
 		}
-		t.Errorf("Current piece must be at column %d but is at %d", 2, upd.Current.X())
+		t.Errorf("Current piece must be at column %d but is at %d", 2, ev.Status.Current.X())
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -123,11 +123,11 @@ func TestInput(t *testing.T) {
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Current.X() == 3 {
+	case ev := <-events:
+		if ev.Status.Current.X() == 3 {
 			break
 		}
-		t.Errorf("Current piece must be at column %d but is at %d", 3, upd.Current.X())
+		t.Errorf("Current piece must be at column %d but is at %d", 3, ev.Status.Current.X())
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -137,11 +137,11 @@ func TestInput(t *testing.T) {
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Current.Y() == 1 {
+	case ev := <-events:
+		if ev.Status.Current.Y() == 1 {
 			break
 		}
-		t.Errorf("Current piece must be at row %d but is at %d", 1, upd.Current.Y())
+		t.Errorf("Current piece must be at row %d but is at %d", 1, ev.Status.Current.Y())
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -151,11 +151,11 @@ func TestInput(t *testing.T) {
 	}()
 
 	select {
-	case upd := <-updates:
-		if upd.Current.Tiles() == [3]int{3, 1, 2} {
+	case ev := <-events:
+		if ev.Status.Current.Tiles() == [3]int{3, 1, 2} {
 			break
 		}
-		t.Errorf("Current piece must be as %v but is as %v", [3]int{3, 1, 2}, upd.Current.Tiles())
+		t.Errorf("Current piece must be as %v but is as %v", [3]int{3, 1, 2}, ev.Status.Current.Tiles())
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -173,18 +173,18 @@ func TestConsolidated(t *testing.T) {
 	cfg.Frequency = 1 * time.Millisecond
 	cfg.InitialSlowdown = 1
 	game := columns.NewGame(pit, *current, *next, r, cfg)
-	updates := make(chan columns.Update)
+	events := make(chan columns.Event)
 	input := make(chan int)
-	go game.Play(input, updates)
+	go game.Play(input, events)
 
 	for {
 		select {
-		case upd := <-updates:
-			if upd.Status == columns.StatusRenewed {
-				if reflect.DeepEqual(initialPit, upd.Pit) {
+		case ev := <-events:
+			if ev.ID == columns.EventRenewed {
+				if reflect.DeepEqual(initialPit, ev.Status.Pit) {
 					t.Errorf("Previous piece wasn't consolidated in pit")
 				}
-				if reflect.DeepEqual(current, upd.Current) {
+				if reflect.DeepEqual(current, ev.Status.Current) {
 					t.Errorf("Current piece wasn't renewed")
 				}
 				return
@@ -232,29 +232,29 @@ func TestScored(t *testing.T) {
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			game := columns.NewGame(pit, *current, *next, r, cfg)
-			updates := make(chan columns.Update)
+			events := make(chan columns.Event)
 			input := make(chan int)
-			go game.Play(input, updates)
+			go game.Play(input, events)
 
 			for {
 				select {
-				case upd := <-updates:
-					if upd.Status == columns.StatusScored {
-						if upd.Points != tt.expectedScore {
-							t.Errorf("Expected %d points but got %d", tt.expectedScore, upd.Points)
+				case ev := <-events:
+					if ev.ID == columns.EventScored {
+						if ev.Status.Points != tt.expectedScore {
+							t.Errorf("Expected %d points but got %d", tt.expectedScore, ev.Status.Points)
 						}
-						if upd.Level != tt.expectedLevel {
-							t.Errorf("Expected level %d but got %d", tt.expectedLevel, upd.Level)
+						if ev.Status.Level != tt.expectedLevel {
+							t.Errorf("Expected level %d but got %d", tt.expectedLevel, ev.Status.Level)
 						}
 						return
 					}
 
-					if upd.Status == columns.StatusRenewed {
-						if upd.Current.Tiles() != tt.expectedTiles {
+					if ev.ID == columns.EventRenewed {
+						if ev.Status.Current.Tiles() != tt.expectedTiles {
 							t.Errorf(
 								"Expected that the next piece was copied to the current one with values %v, got %v",
 								tt.expectedTiles,
-								upd.Current.Tiles(),
+								ev.Status.Current.Tiles(),
 							)
 						}
 						return

@@ -32,12 +32,12 @@ func NewPlayer(c *columns.Piece, action chan<- int, message tl.Drawable, offsetX
 // Draw draws the piece on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
-	if p.Status == columns.StatusPaused {
+	if p.Status == columns.EventPaused {
 		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
-	if p.Status == columns.StatusFinished {
+	if p.Status == columns.EventFinished {
 		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
 		p.message.(*tl.Text).SetText("GAME  OVER")
 		return
@@ -63,7 +63,7 @@ func (p *Player) Draw(screen *tl.Screen) {
 // Tick handles events and moves the piece accosdingly if requested, as requested by Termloop's Drawable interface
 // as well as the control of the game itself, pausing it
 func (p *Player) Tick(event tl.Event) {
-	if event.Type == tl.EventKey && p.Status != columns.StatusFinished { // Is it a keyboard event?
+	if event.Type == tl.EventKey && p.Status != columns.EventFinished { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
 			p.Action <- columns.ActionRight
@@ -74,7 +74,7 @@ func (p *Player) Tick(event tl.Event) {
 		case tl.KeyTab:
 			p.Action <- columns.ActionRotate
 		case tl.KeySpace:
-			if p.Status == columns.StatusFinished {
+			if p.Status == columns.EventFinished {
 				p.Action <- columns.ActionReset
 				//p.startGame()
 			}
