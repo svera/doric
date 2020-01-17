@@ -34,9 +34,9 @@ func getConfig() columns.Config {
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(1, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0}}
+	current := columns.NewPiece(pit, r)
+	next := columns.NewPiece(pit, r)
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
@@ -55,9 +55,9 @@ func TestGameOver(t *testing.T) {
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{1}}
+	current := columns.NewPiece(pit, r)
+	next := columns.NewPiece(pit, r)
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
@@ -96,9 +96,9 @@ func TestPause(t *testing.T) {
 func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	current := columns.NewPiece(pit, r)
+	next := columns.NewPiece(pit, r)
 	game := columns.NewGame(pit, *current, *next, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
@@ -166,9 +166,9 @@ func TestConsolidated(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(3, pithWidth)
 	initialPit := columns.NewPit(3, pithWidth)
-	current := columns.NewPiece(pit)
-	next := columns.NewPiece(pit)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	current := columns.NewPiece(pit, r)
+	next := columns.NewPiece(pit, r)
 	cfg := getConfig()
 	cfg.Frequency = 1 * time.Millisecond
 	cfg.InitialSlowdown = 1
@@ -224,9 +224,9 @@ func TestScored(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			pit := columns.NewPit(3, pithWidth)
-			current := columns.NewPiece(pit)
-			next := columns.NewPiece(pit)
 			r := &mocks.Randomizer{Values: []int{0, 0, 0, 3, 4, 5}}
+			current := columns.NewPiece(pit, r)
+			next := columns.NewPiece(pit, r)
 			cfg := getConfig()
 			cfg.Frequency = 1 * time.Millisecond
 			cfg.InitialSlowdown = 2

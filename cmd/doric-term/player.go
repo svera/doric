@@ -14,7 +14,6 @@ type Player struct {
 	offsetX int
 	offsetY int
 	message tl.Drawable
-	//startGame func()
 }
 
 // NewPlayer returns a new Player instance
@@ -25,7 +24,6 @@ func NewPlayer(c *columns.Piece, action chan<- int, message tl.Drawable, offsetX
 		offsetX: offsetX,
 		offsetY: offsetY,
 		message: message,
-		//startGame: startGame,
 	}
 }
 
@@ -73,11 +71,6 @@ func (p *Player) Tick(event tl.Event) {
 			p.Action <- columns.ActionDown
 		case tl.KeyTab:
 			p.Action <- columns.ActionRotate
-		case tl.KeySpace:
-			if p.Status == columns.EventFinished {
-				p.Action <- columns.ActionReset
-				//p.startGame()
-			}
 		}
 
 		switch event.Ch {

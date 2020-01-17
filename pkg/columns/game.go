@@ -19,7 +19,6 @@ const (
 	ActionRight
 	ActionDown
 	ActionRotate
-	ActionReset
 	ActionPause
 )
 
@@ -69,14 +68,15 @@ type Game struct {
 // NewGame returns a new Game instance
 func NewGame(p Pit, current Piece, next Piece, r Randomizer, cfg Config) *Game {
 	g := &Game{
-		pit:     p,
-		current: &current,
-		next:    &next,
-		level:   1,
-		rand:    r,
-		cfg:     cfg,
+		current:  &current,
+		next:     &next,
+		pit:      p,
+		combo:    1,
+		slowdown: cfg.InitialSlowdown,
+		level:    1,
+		rand:     r,
+		cfg:      cfg,
 	}
-	g.Reset()
 	return g
 }
 
@@ -157,18 +157,6 @@ func (g *Game) Play(input <-chan int, events chan<- Event) {
 // pause switch game between playing and paused
 func (g *Game) pause() {
 	g.paused = !g.paused
-}
-
-// Reset empties pit and reset all game properties to its initial values
-func (g *Game) Reset() {
-	g.pit.reset()
-	g.combo = 1
-	g.slowdown = g.cfg.InitialSlowdown
-	g.points = 0
-	g.current.reset(g.rand)
-	g.next.randomize(g.rand)
-	g.paused = false
-	g.level = 1
 }
 
 func (g *Game) sendUpdate(events chan<- Event, event int) {

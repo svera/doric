@@ -19,15 +19,6 @@ func NewPit(rows, cols int) Pit {
 	return p
 }
 
-// reset empties the pit
-func (p Pit) reset() {
-	for y, row := range p {
-		for x := range row {
-			p[y][x] = Empty
-		}
-	}
-}
-
 // markTilesToRemove scans pit lines looking for tiles to be removed, amd mark those tiles.
 // Tiles repeated in 3 or more consecutive positions horizontally, vertically or diagonally are to be removed.
 func (p Pit) markTilesToRemove() int {

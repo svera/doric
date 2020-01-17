@@ -3,6 +3,8 @@ package columns
 import (
 	"reflect"
 	"testing"
+
+	"github.com/svera/doric/pkg/columns/mocks"
 )
 
 const (
@@ -11,8 +13,8 @@ const (
 )
 
 func TestMovement(t *testing.T) {
-	p := NewPiece(NewPit(pitHeight, pithWidth))
-	p.tiles = [3]int{1, 2, 3}
+	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	p := NewPiece(NewPit(pitHeight, pithWidth), r)
 	p.x = 0
 	p.Left()
 	if p.x != 0 {
