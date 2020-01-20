@@ -43,25 +43,15 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
             defer func() {
 			    close(input)
 		    }()
-            for {
-                select {
-                case ev := <-events:
-                    if ev.ID == columns.EventFinished {
+            for ev := range events{
+                if ev.ID == columns.EventScored {
+                    // Do whatever
+                }
+                if ev.ID == columns.EventUpdated {
                         // Do whatever
-                        return
-                    }
-                    if ev.ID == columns.EventScored {
+                }
+                if ev.ID == columns.EventRenewed {
                         // Do whatever
-                    }
-                    if ev.ID == columns.EventPaused {
-                            // Do whatever
-                    }
-                    if ev.ID == columns.EventUpdated {
-                            // Do whatever
-                    }
-                    if ev.ID == columns.EventRenewed {
-                            // Do whatever
-                    }
                 }
             }
     	}()

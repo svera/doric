@@ -8,18 +8,18 @@ import (
 // Player handles game's interactions in the game, like moving the piece currently falling in the pit
 type Player struct {
 	*tl.Entity
-	Status  int
-	Current *columns.Piece
-	Action  chan<- int
-	offsetX int
-	offsetY int
-	message tl.Drawable
+	Current  *columns.Piece
+	Action   chan<- int
+	offsetX  int
+	offsetY  int
+	message  tl.Drawable
+	Paused   bool
+	Finished bool
 }
 
 // NewPlayer returns a new Player instance
-func NewPlayer(c *columns.Piece, action chan<- int, message tl.Drawable, offsetX int, offsetY int) *Player {
+func NewPlayer(action chan<- int, message tl.Drawable, offsetX int, offsetY int) *Player {
 	return &Player{
-		Current: c,
 		Action:  action,
 		offsetX: offsetX,
 		offsetY: offsetY,
@@ -30,12 +30,12 @@ func NewPlayer(c *columns.Piece, action chan<- int, message tl.Drawable, offsetX
 // Draw draws the piece on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
-	if p.Status == columns.EventPaused {
+	if p.Paused {
 		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
-	if p.Status == columns.EventFinished {
+	if p.Finished {
 		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
 		p.message.(*tl.Text).SetText("GAME  OVER")
 		return
@@ -61,7 +61,7 @@ func (p *Player) Draw(screen *tl.Screen) {
 // Tick handles events and moves the piece accosdingly if requested, as requested by Termloop's Drawable interface
 // as well as the control of the game itself, pausing it
 func (p *Player) Tick(event tl.Event) {
-	if event.Type == tl.EventKey && p.Status != columns.EventFinished { // Is it a keyboard event?
+	if event.Type == tl.EventKey && !p.Finished { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
 			p.Action <- columns.ActionRight

@@ -14,48 +14,49 @@ const (
 
 func TestMovement(t *testing.T) {
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	p := NewPiece(NewPit(pitHeight, pithWidth), r)
+	pit := NewPit(pitHeight, pithWidth)
+	p := NewPiece(r)
 	p.x = 0
-	p.Left()
+	p.Left(pit)
 	if p.x != 0 {
 		t.Errorf("Piece should not move to the left if is in pit's first column")
 	}
 	p.x = 2
-	p.Left()
+	p.Left(pit)
 	if p.x != 1 {
 		t.Errorf("Piece should move to the left if isn't in pit's first column")
 	}
 	p.x = 2
-	p.pit[0][1] = 1
-	p.Left()
+	pit[0][1] = 1
+	p.Left(pit)
 	if p.x != 2 {
 		t.Errorf("Piece should not move to the left if that pit cell is not empty")
 	}
 	p.x = 5
-	p.Right()
+	p.Right(pit)
 	if p.x != 5 {
 		t.Errorf("Piece should not move to the right if is in pit's last column")
 	}
 	p.x = 2
-	p.Right()
+	p.Right(pit)
 	if p.x != 3 {
 		t.Errorf("Piece should move to the right if isn't in pit's last column")
 	}
 	p.x = 2
-	p.pit[0][3] = 1
-	p.Right()
+	pit[0][3] = 1
+	p.Right(pit)
 	if p.x != 2 {
 		t.Errorf("Piece should not move to the right if that pit cell is not empty")
 	}
 	p.y = 0
-	p.Down()
+	p.Down(pit)
 	if p.y != 1 {
 		t.Errorf("Piece should move down if isn't in pit's bottom")
 	}
 	p.y = 0
 	p.x = 2
-	p.pit[1][2] = 1
-	p.Down()
+	pit[1][2] = 1
+	p.Down(pit)
 	if p.y != 0 {
 		t.Errorf("Piece should not move down if cell pit below is not empty")
 	}

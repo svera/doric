@@ -12,18 +12,12 @@ type Randomizer interface {
 type Piece struct {
 	tiles [3]int
 	Coords
-	pit Pit
 }
 
 // NewPiece returns a new Piece instance
-func NewPiece(pit Pit, r Randomizer) *Piece {
+func NewPiece(r Randomizer) *Piece {
 	p := &Piece{
 		tiles: [3]int{},
-		pit:   pit,
-		Coords: Coords{
-			x: pit.Width() / 2,
-			y: 0,
-		},
 	}
 	p.randomize(r)
 	return p
@@ -48,23 +42,23 @@ func (p *Piece) Y() int {
 
 // Left moves the piece to the left in the pit if that position is empty
 // and not out of bounds
-func (p *Piece) Left() {
-	if p.x > 0 && p.pit.Cell(p.x-1, p.y) == Empty {
+func (p *Piece) Left(pit Pit) {
+	if p.x > 0 && pit.Cell(p.x-1, p.y) == Empty {
 		p.x--
 	}
 }
 
 // Right moves the piece to the right in the pit if that position is empty
 // and not out of bounds
-func (p *Piece) Right() {
-	if p.x < p.pit.Width()-1 && p.pit.Cell(p.x+1, p.y) == Empty {
+func (p *Piece) Right(pit Pit) {
+	if p.x < pit.Width()-1 && pit.Cell(p.x+1, p.y) == Empty {
 		p.x++
 	}
 }
 
 // Down moves the current piece down in the pit. If the piece cannot fall further, returns false.
-func (p *Piece) Down() bool {
-	if p.y < p.pit.Height()-1 && p.pit.Cell(p.x, p.y+1) == Empty {
+func (p *Piece) Down(pit Pit) bool {
+	if p.y < pit.Height()-1 && pit.Cell(p.x, p.y+1) == Empty {
 		p.y++
 		return true
 	}
@@ -83,10 +77,10 @@ func (p *Piece) Tiles() [3]int {
 }
 
 // copy copies the tiles from the passed piece, and resets its position to the initial one
-func (p *Piece) copy(next *Piece) {
+func (p *Piece) copy(next *Piece, col int) {
 	p.tiles[0] = next.Tiles()[0]
 	p.tiles[1] = next.Tiles()[1]
 	p.tiles[2] = next.Tiles()[2]
-	p.x = p.pit.Width() / 2
+	p.x = col
 	p.y = 0
 }

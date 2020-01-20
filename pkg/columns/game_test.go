@@ -14,20 +14,18 @@ const (
 	pitHeight = 13
 )
 
-var codeToEventName = [5]string{
+var codeToEventName = [3]string{
 	"EventUpdated",
 	"EventScored",
 	"EventRenewed",
-	"EventPaused",
-	"EventFinished",
 }
 
 func getConfig() columns.Config {
 	return columns.Config{
 		PointsPerTile:           10,
 		NumberTilesForNextLevel: 10,
-		InitialSlowdown:         10,
-		Frequency:               200 * time.Millisecond,
+		InitialSlowdown:         1,
+		Frequency:               1 * time.Millisecond,
 	}
 }
 
@@ -35,20 +33,20 @@ func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(1, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0}}
-	current := columns.NewPiece(pit, r)
-	next := columns.NewPiece(pit, r)
-	game := columns.NewGame(pit, *current, *next, r, getConfig())
+	game := columns.NewGame(pit, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
 	pit[0][3] = 1
 	go game.Play(input, events)
-	select {
-	case ev := <-events:
-		if ev.ID == columns.EventFinished {
-			break
+	for {
+		select {
+		case _, open := <-events:
+			if !open {
+				return
+			}
+		case <-timeout:
+			t.Errorf("Game should be over")
 		}
-	case <-timeout:
-		t.Errorf("Game should be over")
 	}
 }
 
@@ -56,9 +54,7 @@ func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
 	r := &mocks.Randomizer{Values: []int{1}}
-	current := columns.NewPiece(pit, r)
-	next := columns.NewPiece(pit, r)
-	game := columns.NewGame(pit, *current, *next, r, getConfig())
+	game := columns.NewGame(pit, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
 	go game.Play(input, events)
@@ -69,10 +65,9 @@ func TestPause(t *testing.T) {
 
 	select {
 	case ev := <-events:
-		if ev.ID == columns.EventPaused {
-			break
+		if !ev.Status.Paused {
+			t.Errorf("Game must be paused, got '%s'", codeToEventName[ev.ID])
 		}
-		t.Errorf("Game must be paused, got '%s'", codeToEventName[ev.ID])
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -83,10 +78,9 @@ func TestPause(t *testing.T) {
 
 	select {
 	case ev := <-events:
-		if ev.ID != columns.EventPaused {
-			break
+		if ev.Status.Paused {
+			t.Errorf("Game must not be paused, got '%s'", codeToEventName[ev.ID])
 		}
-		t.Errorf("Game must not be paused, got '%s'", codeToEventName[ev.ID])
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
@@ -97,9 +91,7 @@ func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	current := columns.NewPiece(pit, r)
-	next := columns.NewPiece(pit, r)
-	game := columns.NewGame(pit, *current, *next, r, getConfig())
+	game := columns.NewGame(pit, r, getConfig())
 	events := make(chan columns.Event)
 	input := make(chan int)
 	go game.Play(input, events)
@@ -167,24 +159,24 @@ func TestConsolidated(t *testing.T) {
 	pit := columns.NewPit(3, pithWidth)
 	initialPit := columns.NewPit(3, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	current := columns.NewPiece(pit, r)
-	next := columns.NewPiece(pit, r)
 	cfg := getConfig()
-	cfg.Frequency = 1 * time.Millisecond
-	cfg.InitialSlowdown = 1
-	game := columns.NewGame(pit, *current, *next, r, cfg)
+	game := columns.NewGame(pit, r, cfg)
 	events := make(chan columns.Event)
 	input := make(chan int)
+	var previous columns.Piece
 	go game.Play(input, events)
 
 	for {
 		select {
 		case ev := <-events:
+			if ev.ID == columns.EventUpdated {
+				previous = ev.Status.Current
+			}
 			if ev.ID == columns.EventRenewed {
 				if reflect.DeepEqual(initialPit, ev.Status.Pit) {
 					t.Errorf("Previous piece wasn't consolidated in pit")
 				}
-				if reflect.DeepEqual(current, ev.Status.Current) {
+				if reflect.DeepEqual(previous, ev.Status.Current) {
 					t.Errorf("Current piece wasn't renewed")
 				}
 				return
@@ -225,13 +217,10 @@ func TestScored(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			pit := columns.NewPit(3, pithWidth)
 			r := &mocks.Randomizer{Values: []int{0, 0, 0, 3, 4, 5}}
-			current := columns.NewPiece(pit, r)
-			next := columns.NewPiece(pit, r)
 			cfg := getConfig()
-			cfg.Frequency = 1 * time.Millisecond
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			game := columns.NewGame(pit, *current, *next, r, cfg)
+			game := columns.NewGame(pit, r, cfg)
 			events := make(chan columns.Event)
 			input := make(chan int)
 			go game.Play(input, events)

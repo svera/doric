@@ -35,15 +35,13 @@ func main() {
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	current := columns.NewPiece(pit, r)
-	next := columns.NewPiece(pit, r)
-	game = columns.NewGame(pit, *current, *next, r, cfg)
+	game = columns.NewGame(pit, r, cfg)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
-	playerEntity := NewPlayer(current, actions, message, offsetX, offsetY)
-	nextPieceEntity := NewNext(next, offsetX+15, offsetY+5)
+	playerEntity := NewPlayer(actions, message, offsetX, offsetY)
+	nextPieceEntity := NewNext(offsetX+15, offsetY+5)
 
 	setUpMainLevel(pitEntity, playerEntity, nextPieceEntity, message)
 	app.Screen().SetLevel(mainLevel)
@@ -69,35 +67,32 @@ func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, next
 	events := make(chan columns.Event)
 	go game.Play(actions, events)
 
+	firstUpdate := <-events
+	playerEntity.Current = &firstUpdate.Status.Current
+	nextPieceEntity.Piece = &firstUpdate.Status.Next
+
 	go func() {
 		defer func() {
+			playerEntity.Finished = true
 			close(actions)
 		}()
-		for {
-			select {
-			case ev := <-events:
-				if ev.ID == columns.EventFinished {
-					playerEntity.Status = columns.EventFinished
-					return
+		for ev := range events {
+			if ev.ID == columns.EventScored {
+				score.SetText(fmt.Sprintf("Score: %d", ev.Status.Points))
+				level.SetText(fmt.Sprintf("Level: %d", ev.Status.Level))
+				pitEntity.Pit = ev.Status.Pit
+			}
+			if ev.ID == columns.EventUpdated {
+				pitEntity.Pit = ev.Status.Pit
+				playerEntity.Current = &ev.Status.Current
+				playerEntity.Paused = false
+				if ev.Status.Paused {
+					playerEntity.Paused = true
 				}
-				if ev.ID == columns.EventScored {
-					score.SetText(fmt.Sprintf("Score: %d", ev.Status.Points))
-					level.SetText(fmt.Sprintf("Level: %d", ev.Status.Level))
-					pitEntity.Pit = ev.Status.Pit
-					playerEntity.Status = ev.ID
-				}
-				if ev.ID == columns.EventPaused {
-					playerEntity.Status = columns.EventPaused
-				}
-				if ev.ID == columns.EventUpdated {
-					pitEntity.Pit = ev.Status.Pit
-					playerEntity.Current = &ev.Status.Current
-					playerEntity.Status = ev.ID
-				}
-				if ev.ID == columns.EventRenewed {
-					playerEntity.Current = &ev.Status.Current
-					nextPieceEntity.Piece = &ev.Status.Next
-				}
+			}
+			if ev.ID == columns.EventRenewed {
+				playerEntity.Current = &ev.Status.Current
+				nextPieceEntity.Piece = &ev.Status.Next
 			}
 		}
 	}()
