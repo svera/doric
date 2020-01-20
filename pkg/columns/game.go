@@ -62,10 +62,11 @@ type Game struct {
 	level    int
 	rand     Randomizer
 	cfg      Config
+	events   chan Event
 }
 
 // NewGame returns a new Game instance
-func NewGame(p Pit, r Randomizer, cfg Config) *Game {
+func NewGame(p Pit, r Randomizer, cfg Config) (*Game, <-chan Event) {
 	g := &Game{
 		current:  NewPiece(r),
 		next:     NewPiece(r),
@@ -77,21 +78,22 @@ func NewGame(p Pit, r Randomizer, cfg Config) *Game {
 		cfg:      cfg,
 	}
 	g.current.x = p.Width() / 2
-	return g
+	g.events = make(chan Event)
+	return g, g.events
 }
 
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
-func (g *Game) Play(input <-chan int, events chan<- Event) {
+func (g *Game) Play(input <-chan int) {
 	ticker := time.NewTicker(g.cfg.Frequency)
 	ticks := 0
 	totalRemoved := 0
 
 	defer func() {
-		close(events)
+		close(g.events)
 	}()
 
-	g.sendUpdate(events, EventUpdated)
+	g.sendUpdate(EventUpdated)
 	for {
 		select {
 		case act := <-input:
@@ -107,7 +109,7 @@ func (g *Game) Play(input <-chan int, events chan<- Event) {
 			case ActionPause:
 				g.pause()
 			}
-			g.sendUpdate(events, EventUpdated)
+			g.sendUpdate(EventUpdated)
 		case <-ticker.C:
 			if g.paused {
 				continue
@@ -118,7 +120,7 @@ func (g *Game) Play(input <-chan int, events chan<- Event) {
 			}
 			ticks = 0
 			if g.current.Down(g.pit) {
-				g.sendUpdate(events, EventUpdated)
+				g.sendUpdate(EventUpdated)
 				continue
 			}
 			g.pit.consolidate(g.current)
@@ -135,12 +137,12 @@ func (g *Game) Play(input <-chan int, events chan<- Event) {
 				if totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 					g.level++
 				}
-				g.sendUpdate(events, EventScored)
+				g.sendUpdate(EventScored)
 			}
 			g.combo = 1
 			g.current.copy(g.next, g.pit.Width()/2)
 			g.next.randomize(g.rand)
-			g.sendUpdate(events, EventRenewed)
+			g.sendUpdate(EventRenewed)
 
 			if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 				ticker.Stop()
@@ -155,7 +157,7 @@ func (g *Game) pause() {
 	g.paused = !g.paused
 }
 
-func (g *Game) sendUpdate(events chan<- Event, eventID int) {
+func (g *Game) sendUpdate(eventID int) {
 	event := Event{
 		ID: eventID,
 		Status: status{
@@ -170,5 +172,5 @@ func (g *Game) sendUpdate(events chan<- Event, eventID int) {
 	}
 
 	copy(event.Status.Pit, g.pit)
-	events <- event
+	g.events <- event
 }

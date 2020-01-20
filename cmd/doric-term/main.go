@@ -20,6 +20,7 @@ var game *columns.Game
 var mainLevel *tl.BaseLevel
 var score *tl.Text
 var level *tl.Text
+var events <-chan columns.Event
 
 func main() {
 	cfg := columns.Config{
@@ -35,7 +36,7 @@ func main() {
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	game = columns.NewGame(pit, r, cfg)
+	game, events = columns.NewGame(pit, r, cfg)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)
@@ -64,8 +65,7 @@ func setUpMainLevel(pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next,
 func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next, message *tl.Text) {
 	score.SetText(fmt.Sprintf("Score: %d", 0))
 	level.SetText(fmt.Sprintf("Level: %d", 1))
-	events := make(chan columns.Event)
-	go game.Play(actions, events)
+	go game.Play(actions)
 
 	firstUpdate := <-events
 	playerEntity.Current = &firstUpdate.Status.Current
