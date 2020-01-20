@@ -10,7 +10,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
 ## Features
 
 * The classic SEGA arcade game in glorious ASCII.
-* Game logic completely isolated from presentation, running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Basically:
+* Game logic completely isolated from presentation, safely running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Basically:
 ```go
     package main
 
@@ -24,16 +24,13 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
             Frequency:               200 * time.Millisecond,
         }        
         input := make(chan int)
-        events := make(chan columns.Event)
         pit := columns.NewPit(13, 6)
-        current := columns.NewPiece(pit)
-    	next := columns.NewPiece(pit)
         source := rand.NewSource(time.Now().UnixNano())
         rnd := rand.New(source)
         
-        game := columns.NewGame(pit, current, next, rnd, cfg)
+        game, events := columns.NewGame(pit, rnd, cfg)
         // Start the game and return game events in the events channel
-        go game.Play(input, events)
+        go game.Play(input)
 
         // Here you would need to start the game loop, manage input,
         // show graphics on screen, etc.
@@ -42,16 +39,17 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
         go func() {
             defer func() {
 			    close(input)
+                // events channel will be closed when game is over
 		    }()
             for ev := range events{
                 if ev.ID == columns.EventScored {
                     // Do whatever
                 }
                 if ev.ID == columns.EventUpdated {
-                        // Do whatever
+                    // Do whatever
                 }
                 if ev.ID == columns.EventRenewed {
-                        // Do whatever
+                    // Do whatever
                 }
             }
     	}()
