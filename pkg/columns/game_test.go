@@ -63,6 +63,10 @@ func TestPause(t *testing.T) {
 		input <- columns.ActionPause
 	}()
 
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
+
 	select {
 	case ev := <-events:
 		if !ev.Status.Paused {
@@ -99,6 +103,10 @@ func TestInput(t *testing.T) {
 	go func() {
 		input <- columns.ActionLeft
 	}()
+
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
 
 	select {
 	case ev := <-events:
