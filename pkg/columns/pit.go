@@ -28,7 +28,7 @@ func (p Pit) markTilesToRemove() int {
 	p.checkDiagonalLines(remove)
 	for coords := range remove {
 		// Cells with negative values are cells with tiles to be removed
-		p[coords.y][coords.x] = Remove
+		p[coords.Y][coords.X] = Remove
 	}
 	return len(remove)
 }
@@ -132,10 +132,10 @@ func (p Pit) settle() {
 
 // consolidate put the values of the passed piece in the pit
 func (p Pit) consolidate(pc *Piece) {
-	for i, tile := range pc.Tiles() {
-		if pc.Y()-i < 0 {
+	for i, tile := range pc.Tiles {
+		if pc.Y-i < 0 {
 			return
 		}
-		p[pc.Y()-i][pc.X()] = tile
+		p[pc.Y-i][pc.X] = tile
 	}
 }

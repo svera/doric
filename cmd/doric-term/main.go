@@ -10,33 +10,21 @@ import (
 )
 
 const (
-	offsetX   = 32
-	offsetY   = 5
-	pithWidth = 6
-	pitHeight = 13
+	offsetX       = 32
+	offsetY       = 5
+	pithWidth     = 6
+	pitHeight     = 13
+	pointsPerTile = 10
 )
 
-var game *columns.Game
-var mainLevel *tl.BaseLevel
 var score *tl.Text
 var level *tl.Text
-var events <-chan columns.Event
 
 func main() {
-	cfg := columns.Config{
-		PointsPerTile:           10,
-		NumberTilesForNextLevel: 10,
-		InitialSlowdown:         10,
-		Frequency:               200 * time.Millisecond,
-	}
-
 	actions := make(chan int)
 	app := tl.NewGame()
 	app.Screen().SetFps(60)
-	source := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(source)
 	pit := columns.NewPit(pitHeight, pithWidth)
-	game, events = columns.NewGame(pit, r, cfg)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)
@@ -44,55 +32,60 @@ func main() {
 	playerEntity := NewPlayer(actions, message, offsetX, offsetY)
 	nextPieceEntity := NewNext(offsetX+15, offsetY+5)
 
-	setUpMainLevel(pitEntity, playerEntity, nextPieceEntity, message)
+	mainLevel := tl.NewBaseLevel(tl.Cell{
+		Bg: tl.ColorBlack,
+	})
+	setUpMainLevel(mainLevel, pitEntity, playerEntity, nextPieceEntity, message)
 	app.Screen().SetLevel(mainLevel)
-	startGameLogic(actions, pitEntity, playerEntity, nextPieceEntity, message)
+	startGameLogic(actions, pit, pitEntity, playerEntity, nextPieceEntity)
 	app.Start()
 }
 
-func setUpMainLevel(pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next, message *tl.Text) {
-	mainLevel = tl.NewBaseLevel(tl.Cell{
-		Bg: tl.ColorBlack,
-	})
-	mainLevel.AddEntity(pitEntity)
-	mainLevel.AddEntity(playerEntity)
-	mainLevel.AddEntity(nextPieceEntity)
+func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
+	for _, ent := range entities {
+		mainLevel.AddEntity(ent)
+	}
 	mainLevel.AddEntity(score)
 	mainLevel.AddEntity(level)
-	mainLevel.AddEntity(message)
 }
 
-func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next, message *tl.Text) {
-	score.SetText(fmt.Sprintf("Score: %d", 0))
-	level.SetText(fmt.Sprintf("Level: %d", 1))
+func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+	cfg := columns.Config{
+		NumberTilesForNextLevel: 10,
+		InitialSlowdown:         10,
+		Frequency:               200 * time.Millisecond,
+	}
+
+	source := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(source)
+	game, events := columns.NewGame(pit, r, cfg)
+
 	go game.Play(actions)
 
 	firstUpdate := <-events
-	playerEntity.Current = &firstUpdate.Status.Current
-	nextPieceEntity.Piece = &firstUpdate.Status.Next
+	cur := firstUpdate.(columns.EventRenewed).Current
+	nxt := firstUpdate.(columns.EventRenewed).Next
+	playerEntity.Current = &cur
+	nextPieceEntity.Piece = &nxt
 
 	go func() {
+		points := 0
 		defer func() {
 			playerEntity.Finished = true
 			close(actions)
 		}()
 		for ev := range events {
-			if ev.ID == columns.EventScored {
-				score.SetText(fmt.Sprintf("Score: %d", ev.Status.Points))
-				level.SetText(fmt.Sprintf("Level: %d", ev.Status.Level))
-				pitEntity.Pit = ev.Status.Pit
-			}
-			if ev.ID == columns.EventUpdated {
-				pitEntity.Pit = ev.Status.Pit
-				playerEntity.Current = &ev.Status.Current
-				playerEntity.Paused = false
-				if ev.Status.Paused {
-					playerEntity.Paused = true
-				}
-			}
-			if ev.ID == columns.EventRenewed {
-				playerEntity.Current = &ev.Status.Current
-				nextPieceEntity.Piece = &ev.Status.Next
+			switch t := ev.(type) {
+			case columns.EventScored:
+				points += t.Removed * t.Combo * pointsPerTile
+				score.SetText(fmt.Sprintf("Score: %d", points))
+				level.SetText(fmt.Sprintf("Level: %d", t.Level))
+				pitEntity.Pit = t.Pit
+			case columns.EventUpdated:
+				playerEntity.Current = &t.Current
+			case columns.EventRenewed:
+				playerEntity.Current = &t.Current
+				nextPieceEntity.Piece = &t.Next
 			}
 		}
 	}()

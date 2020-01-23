@@ -10,51 +10,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
 ## Features
 
 * The classic SEGA arcade game in glorious ASCII.
-* Game logic completely isolated from presentation, safely running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Basically:
-```go
-    package main
-
-    import "github.com/svera/doric/pkg/columns"
-
-    func main() {
-        cfg := columns.Config{
-            PointsPerTile:           10,
-            NumberTilesForNextLevel: 10,
-            InitialSlowdown:         10,
-            Frequency:               200 * time.Millisecond,
-        }        
-        input := make(chan int)
-        pit := columns.NewPit(13, 6)
-        source := rand.NewSource(time.Now().UnixNano())
-        rnd := rand.New(source)
-        
-        game, events := columns.NewGame(pit, rnd, cfg)
-        // Start the game and return game events in the events channel
-        go game.Play(input)
-
-        // Here you would need to start the game loop, manage input,
-        // show graphics on screen, etc.
-
-        // Listen for game events and act accordingly
-        go func() {
-            defer func() {
-			    close(input)
-                // events channel will be closed when game is over
-		    }()
-            for ev := range events{
-                if ev.ID == columns.EventScored {
-                    // Do whatever
-                }
-                if ev.ID == columns.EventUpdated {
-                    // Do whatever
-                }
-                if ev.ID == columns.EventRenewed {
-                    // Do whatever
-                }
-            }
-    	}()
-    }
-```
+* Game logic completely isolated from presentation, safely running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Check https://godoc.org/github.com/svera/doric/pkg/columns for reference and examples.
 
 ## Build from sources
 

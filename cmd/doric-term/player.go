@@ -41,17 +41,17 @@ func (p *Player) Draw(screen *tl.Screen) {
 		return
 	}
 	p.message.(*tl.Text).SetText("")
-	for i := range p.Current.Tiles() {
-		if i > p.Current.Y() {
+	for i := range p.Current.Tiles {
+		if i > p.Current.Y {
 			continue
 		}
-		screen.RenderCell(p.Current.X()*2+p.offsetX+1, p.Current.Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.Current.Tiles()[i]],
+		screen.RenderCell(p.Current.X*2+p.offsetX+1, p.Current.Y+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.Current.Tiles[i]],
 			Fg: tl.ColorBlack,
 			Ch: '[',
 		})
-		screen.RenderCell(p.Current.X()*2+p.offsetX+2, p.Current.Y()+p.offsetY-i, &tl.Cell{
-			Bg: colors[p.Current.Tiles()[i]],
+		screen.RenderCell(p.Current.X*2+p.offsetX+2, p.Current.Y+p.offsetY-i, &tl.Cell{
+			Bg: colors[p.Current.Tiles[i]],
 			Fg: tl.ColorBlack,
 			Ch: ']',
 		})

@@ -4,13 +4,6 @@ import (
 	"time"
 )
 
-// Events thrown by the game
-const (
-	EventUpdated = iota
-	EventScored
-	EventRenewed
-)
-
 // Possible actions coming from the player
 const (
 	ActionLeft = iota
@@ -22,8 +15,6 @@ const (
 
 // Config holds different parameters related with the game
 type Config struct {
-	// How many points each destroyed tile awards the player
-	PointsPerTile int
 	// How many tiles a player has to destroy to advance to the next level
 	NumberTilesForNextLevel int
 	// As the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
@@ -32,22 +23,6 @@ type Config struct {
 	InitialSlowdown int
 	// Frequency to check for tiles to remove, piece changing, etc.
 	Frequency time.Duration
-}
-
-type status struct {
-	Current Piece
-	Next    Piece
-	Pit     Pit
-	Points  int
-	Combo   int
-	Level   int
-	Paused  bool
-}
-
-// Event contains the status of the game to be consumed by a client
-type Event struct {
-	ID     int
-	Status status
 }
 
 // Game implements the game flow, keeping track of game's status for a player
@@ -62,11 +37,11 @@ type Game struct {
 	level    int
 	rand     Randomizer
 	cfg      Config
-	events   chan Event
+	events   chan interface{}
 }
 
 // NewGame returns a new Game instance
-func NewGame(p Pit, r Randomizer, cfg Config) (*Game, <-chan Event) {
+func NewGame(p Pit, r Randomizer, cfg Config) (*Game, <-chan interface{}) {
 	g := &Game{
 		current:  NewPiece(r),
 		next:     NewPiece(r),
@@ -77,8 +52,8 @@ func NewGame(p Pit, r Randomizer, cfg Config) (*Game, <-chan Event) {
 		rand:     r,
 		cfg:      cfg,
 	}
-	g.current.x = p.Width() / 2
-	g.events = make(chan Event)
+	g.current.X = p.Width() / 2
+	g.events = make(chan interface{})
 	return g, g.events
 }
 
@@ -93,7 +68,7 @@ func (g *Game) Play(input <-chan int) {
 		close(g.events)
 	}()
 
-	g.sendUpdate(EventUpdated)
+	g.sendEventRenewed()
 	for {
 		select {
 		case act := <-input:
@@ -109,7 +84,7 @@ func (g *Game) Play(input <-chan int) {
 			case ActionPause:
 				g.pause()
 			}
-			g.sendUpdate(EventUpdated)
+			g.sendEventUpdated()
 		case <-ticker.C:
 			if g.paused {
 				continue
@@ -120,7 +95,7 @@ func (g *Game) Play(input <-chan int) {
 			}
 			ticks = 0
 			if g.current.Down(g.pit) {
-				g.sendUpdate(EventUpdated)
+				g.sendEventUpdated()
 				continue
 			}
 			g.pit.consolidate(g.current)
@@ -128,21 +103,20 @@ func (g *Game) Play(input <-chan int) {
 			for removed > 0 {
 				totalRemoved += removed
 				g.pit.settle()
-				g.points += removed * g.combo * g.cfg.PointsPerTile
-				g.combo++
-				removed = g.pit.markTilesToRemove()
 				if g.slowdown > 1 {
 					g.slowdown--
 				}
 				if totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 					g.level++
 				}
-				g.sendUpdate(EventScored)
+				g.sendEventScored(removed)
+				g.combo++
+				removed = g.pit.markTilesToRemove()
 			}
 			g.combo = 1
 			g.current.copy(g.next, g.pit.Width()/2)
 			g.next.randomize(g.rand)
-			g.sendUpdate(EventRenewed)
+			g.sendEventRenewed()
 
 			if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 				ticker.Stop()
@@ -157,20 +131,27 @@ func (g *Game) pause() {
 	g.paused = !g.paused
 }
 
-func (g *Game) sendUpdate(eventID int) {
-	event := Event{
-		ID: eventID,
-		Status: status{
-			Pit:     NewPit(g.pit.Height(), g.pit.Width()),
-			Current: *g.current,
-			Next:    *g.next,
-			Points:  g.points,
-			Combo:   g.combo,
-			Level:   g.level,
-			Paused:  g.paused,
-		},
+func (g *Game) sendEventUpdated() {
+	g.events <- EventUpdated{
+		Current: *g.current,
+		Paused:  g.paused,
 	}
+}
 
-	copy(event.Status.Pit, g.pit)
-	g.events <- event
+func (g *Game) sendEventScored(total int) {
+	p := NewPit(g.pit.Height(), g.pit.Width())
+	copy(p, g.pit)
+	g.events <- EventScored{
+		Pit:     p,
+		Combo:   g.combo,
+		Level:   g.level,
+		Removed: total,
+	}
+}
+
+func (g *Game) sendEventRenewed() {
+	g.events <- EventRenewed{
+		Current: *g.current,
+		Next:    *g.next,
+	}
 }

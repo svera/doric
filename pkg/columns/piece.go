@@ -10,14 +10,14 @@ type Randomizer interface {
 
 // Piece represents a piece to fall in the pit
 type Piece struct {
-	tiles [3]int
+	Tiles [3]int
 	Coords
 }
 
 // NewPiece returns a new Piece instance
 func NewPiece(r Randomizer) *Piece {
 	p := &Piece{
-		tiles: [3]int{},
+		Tiles: [3]int{},
 	}
 	p.randomize(r)
 	return p
@@ -25,41 +25,31 @@ func NewPiece(r Randomizer) *Piece {
 
 // randomize assigns the piece three new tiles
 func (p *Piece) randomize(r Randomizer) {
-	p.tiles[0] = r.Intn(maxTile) + 1
-	p.tiles[1] = r.Intn(maxTile) + 1
-	p.tiles[2] = r.Intn(maxTile) + 1
-}
-
-// X returns the position of the piece in the X (horizontal) axis
-func (p *Piece) X() int {
-	return p.x
-}
-
-// Y returns the position of the piece in the Y (vertical) axis
-func (p *Piece) Y() int {
-	return p.y
+	p.Tiles[0] = r.Intn(maxTile) + 1
+	p.Tiles[1] = r.Intn(maxTile) + 1
+	p.Tiles[2] = r.Intn(maxTile) + 1
 }
 
 // Left moves the piece to the left in the pit if that position is empty
 // and not out of bounds
 func (p *Piece) Left(pit Pit) {
-	if p.x > 0 && pit.Cell(p.x-1, p.y) == Empty {
-		p.x--
+	if p.X > 0 && pit.Cell(p.X-1, p.Y) == Empty {
+		p.X--
 	}
 }
 
 // Right moves the piece to the right in the pit if that position is empty
 // and not out of bounds
 func (p *Piece) Right(pit Pit) {
-	if p.x < pit.Width()-1 && pit.Cell(p.x+1, p.y) == Empty {
-		p.x++
+	if p.X < pit.Width()-1 && pit.Cell(p.X+1, p.Y) == Empty {
+		p.X++
 	}
 }
 
 // Down moves the current piece down in the pit. If the piece cannot fall further, returns false.
 func (p *Piece) Down(pit Pit) bool {
-	if p.y < pit.Height()-1 && pit.Cell(p.x, p.y+1) == Empty {
-		p.y++
+	if p.Y < pit.Height()-1 && pit.Cell(p.X, p.Y+1) == Empty {
+		p.Y++
 		return true
 	}
 	return false
@@ -67,20 +57,15 @@ func (p *Piece) Down(pit Pit) bool {
 
 // Rotate rotates piece tiles down. Last tile is moved to the first one
 func (p *Piece) Rotate() {
-	p.tiles[0], p.tiles[2] = p.tiles[2], p.tiles[0]
-	p.tiles[1], p.tiles[2] = p.tiles[2], p.tiles[1]
-}
-
-// Tiles returns Piece's tiles
-func (p *Piece) Tiles() [3]int {
-	return p.tiles
+	p.Tiles[0], p.Tiles[2] = p.Tiles[2], p.Tiles[0]
+	p.Tiles[1], p.Tiles[2] = p.Tiles[2], p.Tiles[1]
 }
 
 // copy copies the tiles from the passed piece, and resets its position to the initial one
 func (p *Piece) copy(next *Piece, col int) {
-	p.tiles[0] = next.Tiles()[0]
-	p.tiles[1] = next.Tiles()[1]
-	p.tiles[2] = next.Tiles()[2]
-	p.x = col
-	p.y = 0
+	p.Tiles[0] = next.Tiles[0]
+	p.Tiles[1] = next.Tiles[1]
+	p.Tiles[2] = next.Tiles[2]
+	p.X = col
+	p.Y = 0
 }

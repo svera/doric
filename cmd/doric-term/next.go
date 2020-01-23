@@ -24,14 +24,14 @@ func NewNext(offsetX int, offsetY int) *Next {
 
 // Draw prints next piece on screen
 func (n *Next) Draw(screen *tl.Screen) {
-	for i := range n.Piece.Tiles() {
+	for i := range n.Piece.Tiles {
 		screen.RenderCell(n.offsetX, n.offsetY-i, &tl.Cell{
-			Bg: colors[n.Piece.Tiles()[i]],
+			Bg: colors[n.Piece.Tiles[i]],
 			Fg: tl.ColorBlack,
 			Ch: '[',
 		})
 		screen.RenderCell(n.offsetX+1, n.offsetY-i, &tl.Cell{
-			Bg: colors[n.Piece.Tiles()[i]],
+			Bg: colors[n.Piece.Tiles[i]],
 			Fg: tl.ColorBlack,
 			Ch: ']',
 		})
