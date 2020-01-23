@@ -27,33 +27,21 @@ type Config struct {
 
 // Game implements the game flow, keeping track of game's status for a player
 type Game struct {
-	current  *Piece
-	next     *Piece
-	pit      Pit
-	points   int
-	combo    int
-	slowdown int
-	paused   bool
-	level    int
-	rand     Randomizer
-	cfg      Config
-	events   chan interface{}
+	pit    Pit
+	paused bool
+	rand   Randomizer
+	cfg    Config
+	events chan interface{}
 }
 
 // NewGame returns a new Game instance
 func NewGame(p Pit, r Randomizer, cfg Config) (*Game, <-chan interface{}) {
 	g := &Game{
-		current:  NewPiece(r),
-		next:     NewPiece(r),
-		pit:      p,
-		combo:    1,
-		slowdown: cfg.InitialSlowdown,
-		level:    1,
-		rand:     r,
-		cfg:      cfg,
+		pit:    p,
+		rand:   r,
+		cfg:    cfg,
+		events: make(chan interface{}),
 	}
-	g.current.X = p.Width() / 2
-	g.events = make(chan interface{})
 	return g, g.events
 }
 
@@ -68,55 +56,62 @@ func (g *Game) Play(input <-chan int) {
 		close(g.events)
 	}()
 
-	g.sendEventRenewed()
+	current := NewPiece(g.rand)
+	next := NewPiece(g.rand)
+	current.X = g.pit.Width() / 2
+	combo := 1
+	slowdown := g.cfg.InitialSlowdown
+	level := 1
+
+	g.sendEventRenewed(current, next)
 	for {
 		select {
 		case act := <-input:
 			switch act {
 			case ActionLeft:
-				g.current.Left(g.pit)
+				current.Left(g.pit)
 			case ActionRight:
-				g.current.Right(g.pit)
+				current.Right(g.pit)
 			case ActionDown:
-				g.current.Down(g.pit)
+				current.Down(g.pit)
 			case ActionRotate:
-				g.current.Rotate()
+				current.Rotate()
 			case ActionPause:
 				g.pause()
 			}
-			g.sendEventUpdated()
+			g.sendEventUpdated(current)
 		case <-ticker.C:
 			if g.paused {
 				continue
 			}
-			if ticks != g.slowdown {
+			if ticks != slowdown {
 				ticks++
 				continue
 			}
 			ticks = 0
-			if g.current.Down(g.pit) {
-				g.sendEventUpdated()
+			if current.Down(g.pit) {
+				g.sendEventUpdated(current)
 				continue
 			}
-			g.pit.consolidate(g.current)
+			g.pit.consolidate(current)
 			removed := g.pit.markTilesToRemove()
 			for removed > 0 {
 				totalRemoved += removed
 				g.pit.settle()
-				if g.slowdown > 1 {
-					g.slowdown--
+				if slowdown > 1 {
+					slowdown--
 				}
-				if totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
-					g.level++
+				if totalRemoved/g.cfg.NumberTilesForNextLevel > level-1 {
+					level++
 				}
-				g.sendEventScored(removed)
-				g.combo++
+				g.sendEventScored(removed, combo, level)
+				combo++
 				removed = g.pit.markTilesToRemove()
 			}
-			g.combo = 1
-			g.current.copy(g.next, g.pit.Width()/2)
-			g.next.randomize(g.rand)
-			g.sendEventRenewed()
+			combo = 1
+			current.copy(next, g.pit.Width()/2)
+			next.randomize(g.rand)
+			g.sendEventRenewed(current, next)
 
 			if g.pit.Cell(g.pit.Width()/2, 0) != Empty {
 				ticker.Stop()
@@ -131,27 +126,27 @@ func (g *Game) pause() {
 	g.paused = !g.paused
 }
 
-func (g *Game) sendEventUpdated() {
+func (g *Game) sendEventUpdated(current *Piece) {
 	g.events <- EventUpdated{
-		Current: *g.current,
+		Current: *current,
 		Paused:  g.paused,
 	}
 }
 
-func (g *Game) sendEventScored(total int) {
+func (g *Game) sendEventScored(total, combo, level int) {
 	p := NewPit(g.pit.Height(), g.pit.Width())
 	copy(p, g.pit)
 	g.events <- EventScored{
 		Pit:     p,
-		Combo:   g.combo,
-		Level:   g.level,
+		Combo:   combo,
+		Level:   level,
 		Removed: total,
 	}
 }
 
-func (g *Game) sendEventRenewed() {
+func (g *Game) sendEventRenewed(current, next *Piece) {
 	g.events <- EventRenewed{
-		Current: *g.current,
-		Next:    *g.next,
+		Current: *current,
+		Next:    *next,
 	}
 }

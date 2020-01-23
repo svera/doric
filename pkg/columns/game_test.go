@@ -14,12 +14,6 @@ const (
 	pitHeight = 13
 )
 
-var codeToEventName = [3]string{
-	"EventUpdated",
-	"EventScored",
-	"EventRenewed",
-}
-
 func getConfig() columns.Config {
 	return columns.Config{
 		NumberTilesForNextLevel: 10,
