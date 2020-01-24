@@ -58,9 +58,7 @@ func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEnt
 
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	game, events := columns.NewGame(pit, r, cfg)
-
-	go game.Play(actions)
+	events := columns.Play(pit, r, cfg, actions)
 
 	firstUpdate := <-events
 	cur := firstUpdate.(columns.EventRenewed).Current
@@ -83,6 +81,7 @@ func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEnt
 				pitEntity.Pit = t.Pit
 			case columns.EventUpdated:
 				playerEntity.Current = &t.Current
+				playerEntity.Paused = t.Paused
 			case columns.EventRenewed:
 				playerEntity.Current = &t.Current
 				nextPieceEntity.Piece = &t.Next

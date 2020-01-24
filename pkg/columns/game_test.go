@@ -26,10 +26,10 @@ func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(1, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0}}
-	game, events := columns.NewGame(pit, r, getConfig())
 	input := make(chan int)
 	pit[0][3] = 1
-	go game.Play(input)
+	events := columns.Play(pit, r, getConfig(), input)
+
 	for {
 		select {
 		case _, open := <-events:
@@ -46,9 +46,8 @@ func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
 	r := &mocks.Randomizer{Values: []int{1}}
-	game, events := columns.NewGame(pit, r, getConfig())
 	input := make(chan int)
-	go game.Play(input)
+	events := columns.Play(pit, r, getConfig(), input)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -85,9 +84,8 @@ func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := columns.NewPit(pitHeight, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	game, events := columns.NewGame(pit, r, getConfig())
 	input := make(chan int)
-	go game.Play(input)
+	events := columns.Play(pit, r, getConfig(), input)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -157,11 +155,9 @@ func TestConsolidated(t *testing.T) {
 	pit := columns.NewPit(3, pithWidth)
 	initialPit := columns.NewPit(3, pithWidth)
 	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
-	cfg := getConfig()
-	game, events := columns.NewGame(pit, r, cfg)
 	input := make(chan int)
 	var previous columns.Piece
-	go game.Play(input)
+	events := columns.Play(pit, r, getConfig(), input)
 
 	for {
 		select {
@@ -221,9 +217,8 @@ func TestScored(t *testing.T) {
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			game, events := columns.NewGame(pit, r, cfg)
 			input := make(chan int)
-			go game.Play(input)
+			events := columns.Play(pit, r, cfg, input)
 
 			<-events
 

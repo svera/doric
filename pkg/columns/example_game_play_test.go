@@ -18,9 +18,8 @@ func Example() {
 	source := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(source)
 
-	game, events := columns.NewGame(pit, rnd, cfg)
 	// Start the game and return game events in the events channel
-	go game.Play(input)
+	events := columns.Play(pit, rnd, cfg, input)
 
 	// Here you would need to start the game loop, manage input,
 	// show graphics on screen, etc.
