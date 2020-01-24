@@ -27,7 +27,7 @@ type Config struct {
 
 // Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases. Game ends when no more new pieces can enter the pit.
-func Play(pit Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface{} {
+func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface{} {
 	events := make(chan interface{})
 
 	go func() {
@@ -39,6 +39,8 @@ func Play(pit Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interfa
 			close(events)
 		}()
 
+		pit := NewPit(p.Height(), p.Width())
+		copy(pit, p)
 		current := NewPiece(rand)
 		next := NewPiece(rand)
 		current.X = pit.Width() / 2
