@@ -60,6 +60,7 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 					current.Right(pit)
 				case ActionDown:
 					current.Down(pit)
+					ticks = 0
 				case ActionRotate:
 					current.Rotate()
 				case ActionPause:

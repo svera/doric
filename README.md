@@ -10,7 +10,7 @@ A [Columns](https://en.wikipedia.org/wiki/Columns_(video_game)) game implementat
 ## Features
 
 * The classic SEGA arcade game in glorious ASCII.
-* Game logic completely isolated from presentation, safely running in its own thread. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Check https://godoc.org/github.com/svera/doric/pkg/columns for reference and examples.
+* Game logic completely isolated from presentation, concurrent-safe. [pkg/columns](pkg/columns) library can be used in other implementations with minimal effort. Check https://godoc.org/github.com/svera/doric/pkg/columns for reference and examples.
 
 ## Build from sources
 
