@@ -1,13 +1,13 @@
-package columns_test
+package doric_test
 
 import (
 	"testing"
 
-	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric"
 )
 
 func TestCell(t *testing.T) {
-	p := columns.NewPit(13, 6)
+	p := doric.NewPit(13, 6)
 	p[12][0] = 1
 	p[0][5] = 1
 	if p.Cell(0, 12) != 1 || p.Cell(5, 0) != 1 {

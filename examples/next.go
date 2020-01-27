@@ -2,13 +2,13 @@ package main
 
 import (
 	tl "github.com/JoelOtter/termloop"
-	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric"
 )
 
 // Next is an entity used to show next piece on screen
 type Next struct {
 	*tl.Entity
-	Piece   *columns.Piece
+	Piece   *doric.Piece
 	offsetX int
 	offsetY int
 }

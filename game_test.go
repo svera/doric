@@ -1,12 +1,11 @@
-package columns_test
+package doric_test
 
 import (
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/svera/doric/pkg/columns"
-	"github.com/svera/doric/pkg/columns/mocks"
+	"github.com/svera/doric"
 )
 
 const (
@@ -14,8 +13,8 @@ const (
 	pitHeight = 13
 )
 
-func getConfig() columns.Config {
-	return columns.Config{
+func getConfig() doric.Config {
+	return doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         1,
 		Frequency:               1 * time.Millisecond,
@@ -24,11 +23,11 @@ func getConfig() columns.Config {
 
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(1, pithWidth)
-	r := &mocks.Randomizer{Values: []int{0}}
+	pit := doric.NewPit(1, pithWidth)
+	r := &doric.MockRandomizer{Values: []int{0}}
 	input := make(chan int)
 	pit[0][3] = 1
-	events := columns.Play(pit, r, getConfig(), input)
+	events := doric.Play(pit, r, getConfig(), input)
 
 	for {
 		select {
@@ -44,20 +43,20 @@ func TestGameOver(t *testing.T) {
 
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(pitHeight, pithWidth)
-	r := &mocks.Randomizer{Values: []int{1}}
+	pit := doric.NewPit(pitHeight, pithWidth)
+	r := &doric.MockRandomizer{Values: []int{1}}
 	input := make(chan int)
-	events := columns.Play(pit, r, getConfig(), input)
+	events := doric.Play(pit, r, getConfig(), input)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
 	<-events
 
-	input <- columns.ActionPause
+	input <- doric.ActionPause
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(columns.EventUpdated); ok {
+		if et, ok := ev.(doric.EventUpdated); ok {
 			if !et.Paused {
 				t.Errorf("Game must be paused")
 			}
@@ -66,11 +65,11 @@ func TestPause(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- columns.ActionPause
+	input <- doric.ActionPause
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(columns.EventUpdated); ok {
+		if et, ok := ev.(doric.EventUpdated); ok {
 			if et.Paused {
 				t.Errorf("Game must not be paused")
 			}
@@ -82,20 +81,20 @@ func TestPause(t *testing.T) {
 
 func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(pitHeight, pithWidth)
-	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	pit := doric.NewPit(pitHeight, pithWidth)
+	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
 	input := make(chan int)
-	events := columns.Play(pit, r, getConfig(), input)
+	events := doric.Play(pit, r, getConfig(), input)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
 	<-events
 
-	input <- columns.ActionLeft
+	input <- doric.ActionLeft
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(columns.EventUpdated); ok {
+		if et, ok := ev.(doric.EventUpdated); ok {
 			if et.Current.X == 2 {
 				break
 			}
@@ -105,11 +104,11 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- columns.ActionRight
+	input <- doric.ActionRight
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(columns.EventUpdated); ok {
+		if et, ok := ev.(doric.EventUpdated); ok {
 			if et.Current.X == 3 {
 				break
 			}
@@ -119,11 +118,11 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- columns.ActionDown
+	input <- doric.ActionDown
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(columns.EventUpdated); ok {
+		if et, ok := ev.(doric.EventUpdated); ok {
 			if et.Current.Y == 1 {
 				break
 			}
@@ -133,12 +132,12 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- columns.ActionRotate
+	input <- doric.ActionRotate
 
 	select {
 	case ev := <-events:
 		switch et := ev.(type) {
-		case columns.EventUpdated:
+		case doric.EventUpdated:
 			if et.Current.Tiles == [3]int{3, 1, 2} {
 				break
 			}
@@ -152,24 +151,24 @@ func TestInput(t *testing.T) {
 
 func TestConsolidated(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := columns.NewPit(3, pithWidth)
-	initialPit := columns.NewPit(3, pithWidth)
-	r := &mocks.Randomizer{Values: []int{0, 1, 2}}
+	pit := doric.NewPit(3, pithWidth)
+	initialPit := doric.NewPit(3, pithWidth)
+	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
 	input := make(chan int)
-	var previous columns.Piece
-	events := columns.Play(pit, r, getConfig(), input)
+	var previous doric.Piece
+	events := doric.Play(pit, r, getConfig(), input)
 
 	for {
 		select {
 		case ev := <-events:
 			switch et := ev.(type) {
-			case columns.EventUpdated:
+			case doric.EventUpdated:
 				previous = et.Current
-			case columns.EventScored:
+			case doric.EventScored:
 				if reflect.DeepEqual(initialPit, et.Pit) {
 					t.Errorf("Previous piece wasn't consolidated in pit")
 				}
-			case columns.EventRenewed:
+			case doric.EventRenewed:
 				if reflect.DeepEqual(previous, et.Current) {
 					t.Errorf("Current piece wasn't renewed")
 				}
@@ -212,13 +211,13 @@ func TestScored(t *testing.T) {
 	for _, tt := range scoredTests {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
-			pit := columns.NewPit(3, pithWidth)
-			r := &mocks.Randomizer{Values: []int{0, 0, 0, 3, 4, 5}}
+			pit := doric.NewPit(3, pithWidth)
+			r := &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}}
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			input := make(chan int)
-			events := columns.Play(pit, r, cfg, input)
+			events := doric.Play(pit, r, cfg, input)
 
 			<-events
 
@@ -226,7 +225,7 @@ func TestScored(t *testing.T) {
 				select {
 				case ev := <-events:
 					switch et := ev.(type) {
-					case columns.EventScored:
+					case doric.EventScored:
 						if et.Removed != tt.expectedRemoved {
 							t.Errorf("Expected %d removed tiles but got %d", tt.expectedRemoved, et.Removed)
 						}
@@ -237,7 +236,7 @@ func TestScored(t *testing.T) {
 							t.Errorf("Expected combo value %d but got %d", tt.expectedCombo, et.Combo)
 						}
 						return
-					case columns.EventRenewed:
+					case doric.EventRenewed:
 						if et.Current.Tiles != tt.expectedTiles {
 							t.Errorf(
 								"Expected that the next piece was copied to the current one with values %v, got %v",

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	tl "github.com/JoelOtter/termloop"
-	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric"
 )
 
 const (
@@ -24,7 +24,7 @@ func main() {
 	actions := make(chan int)
 	app := tl.NewGame()
 	app.Screen().SetFps(60)
-	pit := columns.NewPit(pitHeight, pithWidth)
+	pit := doric.NewPit(pitHeight, pithWidth)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 	pitEntity := NewPit(pit, offsetX, offsetY)
@@ -49,8 +49,8 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
 	mainLevel.AddEntity(level)
 }
 
-func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
-	cfg := columns.Config{
+func startGameLogic(actions chan int, pit doric.Pit, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         10,
 		Frequency:               200 * time.Millisecond,
@@ -58,11 +58,11 @@ func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEnt
 
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	events := columns.Play(pit, r, cfg, actions)
+	events := doric.Play(pit, r, cfg, actions)
 
 	firstUpdate := <-events
-	cur := firstUpdate.(columns.EventRenewed).Current
-	nxt := firstUpdate.(columns.EventRenewed).Next
+	cur := firstUpdate.(doric.EventRenewed).Current
+	nxt := firstUpdate.(doric.EventRenewed).Next
 	playerEntity.Current = &cur
 	nextPieceEntity.Piece = &nxt
 
@@ -74,15 +74,15 @@ func startGameLogic(actions chan int, pit columns.Pit, pitEntity *Pit, playerEnt
 		}()
 		for ev := range events {
 			switch t := ev.(type) {
-			case columns.EventScored:
+			case doric.EventScored:
 				points += t.Removed * t.Combo * pointsPerTile
 				score.SetText(fmt.Sprintf("Score: %d", points))
 				level.SetText(fmt.Sprintf("Level: %d", t.Level))
 				pitEntity.Pit = t.Pit
-			case columns.EventUpdated:
+			case doric.EventUpdated:
 				playerEntity.Current = &t.Current
 				playerEntity.Paused = t.Paused
-			case columns.EventRenewed:
+			case doric.EventRenewed:
 				playerEntity.Current = &t.Current
 				nextPieceEntity.Piece = &t.Next
 			}

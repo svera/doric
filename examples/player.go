@@ -2,13 +2,13 @@ package main
 
 import (
 	tl "github.com/JoelOtter/termloop"
-	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric"
 )
 
 // Player handles game's interactions in the game, like moving the piece currently falling in the pit
 type Player struct {
 	*tl.Entity
-	Current  *columns.Piece
+	Current  *doric.Piece
 	Action   chan<- int
 	offsetX  int
 	offsetY  int
@@ -64,18 +64,18 @@ func (p *Player) Tick(event tl.Event) {
 	if event.Type == tl.EventKey && !p.Finished { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
-			p.Action <- columns.ActionRight
+			p.Action <- doric.ActionRight
 		case tl.KeyArrowLeft:
-			p.Action <- columns.ActionLeft
+			p.Action <- doric.ActionLeft
 		case tl.KeyArrowDown:
-			p.Action <- columns.ActionDown
+			p.Action <- doric.ActionDown
 		case tl.KeyTab:
-			p.Action <- columns.ActionRotate
+			p.Action <- doric.ActionRotate
 		}
 
 		switch event.Ch {
 		case 'p', 'P':
-			p.Action <- columns.ActionPause
+			p.Action <- doric.ActionPause
 		}
 	}
 }

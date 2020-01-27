@@ -1,4 +1,4 @@
-package columns
+package doric
 
 // values that represent empty or removable tiles in the pit
 const (

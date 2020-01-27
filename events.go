@@ -1,4 +1,4 @@
-package columns
+package doric
 
 // EventUpdated is sent as a response to a player action (moving the current piece or pausing the game)
 type EventUpdated struct {

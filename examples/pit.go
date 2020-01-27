@@ -2,19 +2,19 @@ package main
 
 import (
 	tl "github.com/JoelOtter/termloop"
-	"github.com/svera/doric/pkg/columns"
+	"github.com/svera/doric"
 )
 
 // Pit represents a pit on screen following Termloop's Drawable interface
 type Pit struct {
 	*tl.Entity
-	Pit     columns.Pit
+	Pit     doric.Pit
 	offsetX int
 	offsetY int
 }
 
 // NewPit returns a new pit instance
-func NewPit(p columns.Pit, offsetX int, offsetY int) *Pit {
+func NewPit(p doric.Pit, offsetX int, offsetY int) *Pit {
 	return &Pit{
 		Pit:     p,
 		Entity:  tl.NewEntity(offsetX, offsetY, p.Width(), p.Height()),
@@ -57,7 +57,7 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				continue
 			}
 			// Tiles
-			if p.Pit.Cell(x, y) > columns.Empty {
+			if p.Pit.Cell(x, y) > doric.Empty {
 				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
 					Bg: colors[p.Pit.Cell(x, y)],
 					Fg: tl.ColorBlack,

@@ -1,4 +1,4 @@
-package columns
+package doric
 
 import (
 	"time"
@@ -25,8 +25,11 @@ type Config struct {
 	Frequency time.Duration
 }
 
-// Play starts the game loop, making pieces fall to the bottom of the pit at gradually quicker speeds
-// as level increases. Game ends when no more new pieces can enter the pit.
+// Play starts the game loop in a separate thread, making pieces fall to the bottom of the pit at gradually quicker speeds
+// as level increases.
+// It returns a channel in which the different events will be returned.
+// Game ends when no more new pieces can enter the pit, and this will be signaled with the closing of the
+// events channel.
 func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface{} {
 	events := make(chan interface{})
 

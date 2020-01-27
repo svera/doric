@@ -1,4 +1,4 @@
-package columns
+package doric
 
 // maxTile is the maximum tile value a piece can contain
 const maxTile = 6
