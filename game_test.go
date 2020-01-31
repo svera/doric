@@ -208,15 +208,16 @@ func TestScored(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		pit                     doric.Pit
+		rand                    *doric.MockRandomizer
 		expectedPit             doric.Pit
 		expectedRemoved         int
 		expectedLevel           int
-		expectedCombo           int
 		expectedCurrent         [3]int
 	}{
 		{
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
+			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -229,12 +230,12 @@ func TestScored(t *testing.T) {
 			},
 			expectedRemoved: 12,
 			expectedLevel:   1,
-			expectedCombo:   1,
 			expectedCurrent: [3]int{4, 5, 6},
 		},
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
+			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -247,25 +248,24 @@ func TestScored(t *testing.T) {
 			},
 			expectedRemoved: 12,
 			expectedLevel:   2,
-			expectedCombo:   1,
 			expectedCurrent: [3]int{4, 5, 6},
 		},
 		{
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
+			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: doric.Pit{
-				{1, 0, 0, 0, 0, 1},
-				{2, 1, 0, 0, 1, 2},
-				{3, 2, 1, 0, 2, 3},
+				[]int{1, 0, 0, 0, 0, 1},
+				[]int{2, 1, 0, 0, 1, 2},
+				[]int{3, 2, 1, 0, 2, 3},
 			},
 			expectedPit: doric.Pit{
-				{-1, 0, 0, -1, 0, -1},
-				{2, -1, 0, -1, -1, 2},
-				{3, 2, -1, -1, 2, 3},
+				[]int{-1, 0, 0, -1, 0, -1},
+				[]int{2, -1, 0, -1, -1, 2},
+				[]int{3, 2, -1, -1, 2, 3},
 			},
 			expectedRemoved: 8,
 			expectedLevel:   1,
-			expectedCombo:   1,
 			expectedCurrent: [3]int{4, 5, 6},
 		},
 	}
@@ -273,12 +273,11 @@ func TestScored(t *testing.T) {
 	for _, tt := range scoredTests {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
-			r := &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}}
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			input := make(chan int)
-			events := doric.Play(tt.pit, r, cfg, input)
+			events := doric.Play(tt.pit, tt.rand, cfg, input)
 
 			<-events
 
@@ -293,9 +292,6 @@ func TestScored(t *testing.T) {
 						if asserted.Level != tt.expectedLevel {
 							t.Errorf("Expected level %d but got %d", tt.expectedLevel, asserted.Level)
 						}
-						if asserted.Combo != tt.expectedCombo {
-							t.Errorf("Expected combo value %d but got %d", tt.expectedCombo, asserted.Combo)
-						}
 						if !reflect.DeepEqual(tt.expectedPit, asserted.Pit) {
 							t.Errorf("Expected pit %v but got %v", tt.expectedPit, asserted.Pit)
 						}
@@ -308,6 +304,75 @@ func TestScored(t *testing.T) {
 							)
 						}
 						return
+					}
+
+				case <-timeout:
+					t.Fatalf("Test timed out and no scored update reached")
+				}
+			}
+		})
+	}
+}
+
+func TestScoredCombo(t *testing.T) {
+	comboTests := []struct {
+		name                    string
+		numberTilesForNextLevel int
+		pit                     doric.Pit
+		rand                    *doric.MockRandomizer
+		expectedPits            []doric.Pit
+	}{
+		{
+			name:                    "Scored with combo",
+			numberTilesForNextLevel: 20,
+			rand:                    &doric.MockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
+			pit: doric.Pit{
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{0, 2, 2, 0, 1, 1},
+			},
+			expectedPits: []doric.Pit{
+				doric.Pit{
+					[]int{0, 0, 0, 3, 0, 0},
+					[]int{0, 0, 0, 2, 0, 0},
+					[]int{0, 2, 2, -1, -1, -1},
+				},
+				doric.Pit{
+					[]int{0, 0, 0, 0, 0, 0},
+					[]int{0, 0, 0, 3, 0, 0},
+					[]int{0, -1, -1, -1, 0, 0},
+				},
+			},
+		},
+	}
+
+	for _, tt := range comboTests {
+		t.Run(tt.name, func(t *testing.T) {
+			timeout := time.After(1 * time.Second)
+			cfg := getConfig()
+			cfg.InitialSlowdown = 2
+			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
+			input := make(chan int)
+			events := doric.Play(tt.pit, tt.rand, cfg, input)
+
+			<-events
+
+			count := 0
+			for {
+				select {
+				case ev := <-events:
+					switch asserted := ev.(type) {
+					case doric.EventScored:
+						if asserted.Combo != count+1 {
+							t.Errorf("Expected combo value %d but got %d", count, asserted.Combo)
+						}
+						if !reflect.DeepEqual(tt.expectedPits[count], asserted.Pit) {
+							t.Errorf("Expected pit %v but got %v", tt.expectedPits[count], asserted.Pit)
+						}
+						if count == len(tt.expectedPits)-1 {
+							return
+						}
+						count++
 					}
 
 				case <-timeout:
