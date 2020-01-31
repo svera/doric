@@ -149,99 +149,162 @@ func TestInput(t *testing.T) {
 
 }
 
-func TestConsolidated(t *testing.T) {
+func TestPitBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(3, pithWidth)
-	initialPit := doric.NewPit(3, pithWidth)
+	pit := doric.NewPit(1, 1)
 	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
 	input := make(chan int)
-	var previous doric.Piece
 	events := doric.Play(pit, r, getConfig(), input)
 
-	for {
-		select {
-		case ev := <-events:
-			switch et := ev.(type) {
-			case doric.EventUpdated:
-				previous = et.Current
-			case doric.EventScored:
-				if reflect.DeepEqual(initialPit, et.Pit) {
-					t.Errorf("Previous piece wasn't consolidated in pit")
-				}
-			case doric.EventRenewed:
-				if reflect.DeepEqual(previous, et.Current) {
-					t.Errorf("Current piece wasn't renewed")
-				}
-				return
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
+
+	input <- doric.ActionLeft
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 0 {
+				break
 			}
-		case <-timeout:
-			t.Errorf("Test timed out and current piece wasn't renewed")
+			t.Errorf("Current piece must be at column %d but is at %d", 0, et.Current.X)
 		}
+	case <-timeout:
+		t.Errorf("Test timed out")
 	}
 
+	input <- doric.ActionRight
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 0 {
+				break
+			}
+			t.Errorf("Current piece must be at column %d but is at %d", 0, et.Current.X)
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	input <- doric.ActionDown
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.Y == 0 {
+				break
+			}
+			t.Errorf("Current piece must be at row %d but is at %d", 0, et.Current.Y)
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
 }
 
 func TestScored(t *testing.T) {
 	scoredTests := []struct {
 		name                    string
 		numberTilesForNextLevel int
+		pit                     doric.Pit
+		expectedPit             doric.Pit
 		expectedRemoved         int
 		expectedLevel           int
 		expectedCombo           int
-		expectedTiles           [3]int
+		expectedCurrent         [3]int
 	}{
 		{
 			name:                    "Scored with no level up",
-			numberTilesForNextLevel: 10,
-			expectedRemoved:         3,
-			expectedLevel:           1,
-			expectedCombo:           1,
-			expectedTiles:           [3]int{4, 5, 6},
+			numberTilesForNextLevel: 20,
+			pit: doric.Pit{
+				[]int{0, 1, 0, 0, 0, 0},
+				[]int{1, 1, 0, 0, 1, 1},
+				[]int{1, 1, 1, 0, 1, 1},
+			},
+			expectedPit: doric.Pit{
+				[]int{0, -1, 0, -1, 0, 0},
+				[]int{1, -1, 0, -1, -1, -1},
+				[]int{-1, -1, -1, -1, -1, -1},
+			},
+			expectedRemoved: 12,
+			expectedLevel:   1,
+			expectedCombo:   1,
+			expectedCurrent: [3]int{4, 5, 6},
 		},
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
-			expectedRemoved:         3,
-			expectedLevel:           2,
-			expectedCombo:           1,
-			expectedTiles:           [3]int{4, 5, 6},
+			pit: doric.Pit{
+				[]int{0, 1, 0, 0, 0, 0},
+				[]int{1, 1, 0, 0, 1, 1},
+				[]int{1, 1, 1, 0, 1, 1},
+			},
+			expectedPit: doric.Pit{
+				[]int{0, -1, 0, -1, 0, 0},
+				[]int{1, -1, 0, -1, -1, -1},
+				[]int{-1, -1, -1, -1, -1, -1},
+			},
+			expectedRemoved: 12,
+			expectedLevel:   2,
+			expectedCombo:   1,
+			expectedCurrent: [3]int{4, 5, 6},
+		},
+		{
+			name:                    "Diagonal lines",
+			numberTilesForNextLevel: 20,
+			pit: doric.Pit{
+				{1, 0, 0, 0, 0, 1},
+				{2, 1, 0, 0, 1, 2},
+				{3, 2, 1, 0, 2, 3},
+			},
+			expectedPit: doric.Pit{
+				{-1, 0, 0, -1, 0, -1},
+				{2, -1, 0, -1, -1, 2},
+				{3, 2, -1, -1, 2, 3},
+			},
+			expectedRemoved: 8,
+			expectedLevel:   1,
+			expectedCombo:   1,
+			expectedCurrent: [3]int{4, 5, 6},
 		},
 	}
 
 	for _, tt := range scoredTests {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
-			pit := doric.NewPit(3, pithWidth)
 			r := &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}}
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			input := make(chan int)
-			events := doric.Play(pit, r, cfg, input)
+			events := doric.Play(tt.pit, r, cfg, input)
 
 			<-events
 
 			for {
 				select {
 				case ev := <-events:
-					switch et := ev.(type) {
+					switch asserted := ev.(type) {
 					case doric.EventScored:
-						if et.Removed != tt.expectedRemoved {
-							t.Errorf("Expected %d removed tiles but got %d", tt.expectedRemoved, et.Removed)
+						if asserted.Removed != tt.expectedRemoved {
+							t.Errorf("Expected %d removed tiles but got %d", tt.expectedRemoved, asserted.Removed)
 						}
-						if et.Level != tt.expectedLevel {
-							t.Errorf("Expected level %d but got %d", tt.expectedLevel, et.Level)
+						if asserted.Level != tt.expectedLevel {
+							t.Errorf("Expected level %d but got %d", tt.expectedLevel, asserted.Level)
 						}
-						if et.Combo != tt.expectedCombo {
-							t.Errorf("Expected combo value %d but got %d", tt.expectedCombo, et.Combo)
+						if asserted.Combo != tt.expectedCombo {
+							t.Errorf("Expected combo value %d but got %d", tt.expectedCombo, asserted.Combo)
 						}
-						return
+						if !reflect.DeepEqual(tt.expectedPit, asserted.Pit) {
+							t.Errorf("Expected pit %v but got %v", tt.expectedPit, asserted.Pit)
+						}
 					case doric.EventRenewed:
-						if et.Current.Tiles != tt.expectedTiles {
+						if asserted.Current.Tiles != tt.expectedCurrent {
 							t.Errorf(
 								"Expected that the next piece was copied to the current one with values %v, got %v",
-								tt.expectedTiles,
-								et.Current.Tiles,
+								tt.expectedCurrent,
+								asserted.Current.Tiles,
 							)
 						}
 						return
@@ -253,5 +316,4 @@ func TestScored(t *testing.T) {
 			}
 		})
 	}
-
 }

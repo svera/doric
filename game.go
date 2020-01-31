@@ -27,7 +27,8 @@ type Config struct {
 
 // Play starts the game loop in a separate thread, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases.
-// It returns a channel in which the different events will be returned.
+// Game can be controlled sending action codes to the input channel. Game updates are communicated as events in the returned
+// channel.
 // Game ends when no more new pieces can enter the pit, and this will be signaled with the closing of the
 // events channel.
 func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface{} {
@@ -58,14 +59,14 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 			case act := <-input:
 				switch act {
 				case ActionLeft:
-					current.Left(pit)
+					current.left(pit)
 				case ActionRight:
-					current.Right(pit)
+					current.right(pit)
 				case ActionDown:
-					current.Down(pit)
+					current.down(pit)
 					ticks = 0
 				case ActionRotate:
-					current.Rotate()
+					current.rotate()
 				case ActionPause:
 					paused = !paused
 				}
@@ -79,7 +80,7 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 					continue
 				}
 				ticks = 0
-				if current.Down(pit) {
+				if current.down(pit) {
 					sendEventUpdated(events, current, paused)
 					continue
 				}
@@ -87,7 +88,6 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 				removed := pit.markTilesToRemove()
 				for removed > 0 {
 					totalRemoved += removed
-					pit.settle()
 					if slowdown > 1 {
 						slowdown--
 					}
@@ -96,6 +96,7 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 					}
 					sendEventScored(events, pit, removed, combo, level)
 					combo++
+					pit.settle()
 					removed = pit.markTilesToRemove()
 				}
 				combo = 1
@@ -123,7 +124,9 @@ func sendEventUpdated(events chan<- interface{}, current *Piece, paused bool) {
 
 func sendEventScored(events chan<- interface{}, pit Pit, total, combo, level int) {
 	p := NewPit(pit.Height(), pit.Width())
-	copy(p, pit)
+	for i := range pit {
+		copy(p[i], pit[i])
+	}
 	events <- EventScored{
 		Pit:     p,
 		Combo:   combo,

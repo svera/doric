@@ -30,24 +30,24 @@ func (p *Piece) randomize(r Randomizer) {
 	p.Tiles[2] = r.Intn(maxTile) + 1
 }
 
-// Left moves the piece to the left in the pit if that position is empty
+// left moves the piece to the left in the pit if that position is empty
 // and not out of bounds
-func (p *Piece) Left(pit Pit) {
+func (p *Piece) left(pit Pit) {
 	if p.X > 0 && pit.Cell(p.X-1, p.Y) == Empty {
 		p.X--
 	}
 }
 
-// Right moves the piece to the right in the pit if that position is empty
+// right moves the piece to the right in the pit if that position is empty
 // and not out of bounds
-func (p *Piece) Right(pit Pit) {
+func (p *Piece) right(pit Pit) {
 	if p.X < pit.Width()-1 && pit.Cell(p.X+1, p.Y) == Empty {
 		p.X++
 	}
 }
 
-// Down moves the current piece down in the pit. If the piece cannot fall further, returns false.
-func (p *Piece) Down(pit Pit) bool {
+// down moves the current piece down in the pit. If the piece cannot fall further, returns false.
+func (p *Piece) down(pit Pit) bool {
 	if p.Y < pit.Height()-1 && pit.Cell(p.X, p.Y+1) == Empty {
 		p.Y++
 		return true
@@ -55,8 +55,8 @@ func (p *Piece) Down(pit Pit) bool {
 	return false
 }
 
-// Rotate rotates piece tiles down. Last tile is moved to the first one
-func (p *Piece) Rotate() {
+// rotate rotates piece tiles down. Last tile is moved to the first one
+func (p *Piece) rotate() {
 	p.Tiles[0], p.Tiles[2] = p.Tiles[2], p.Tiles[0]
 	p.Tiles[1], p.Tiles[2] = p.Tiles[2], p.Tiles[1]
 }

@@ -9,7 +9,7 @@ const (
 // Pit represents the field of play, holding the tiles that are falling
 type Pit [][]int
 
-// NewPit return a new Pit instance
+// NewPit return a new empty Pit instance
 func NewPit(rows, cols int) Pit {
 	var p Pit
 	p = make([][]int, rows)
@@ -108,24 +108,22 @@ func (p Pit) Height() int {
 // settle moves down all tiles which have empty cells below
 func (p Pit) settle() {
 	for x := 0; x < p.Width(); x++ {
-		tiles := []int{}
+		moveDown := 0
 		for y := p.Height() - 1; y >= 0; y-- {
 			// This cell contains a tile to be removed, do not put it in the slice of tiles to settle again
 			if p[y][x] < 0 {
+				p[y][x] = Empty
+				moveDown++
 				continue
 			}
-			// There are no more tiles over an empty cell, so we can settle this column
+			// There are no more tiles over an empty cell, so we can stop processing this column
 			if p[y][x] == Empty {
-				for i := 0; i < p.Height(); i++ {
-					if len(tiles)-1 >= i {
-						p[p.Height()-1-i][x] = tiles[i]
-					} else {
-						p[p.Height()-1-i][x] = Empty
-					}
-				}
 				break
 			}
-			tiles = append(tiles, p[y][x])
+			if moveDown > 0 {
+				p[y+moveDown][x] = p[y][x]
+				p[y][x] = Empty
+			}
 		}
 	}
 }
