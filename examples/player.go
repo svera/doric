@@ -64,18 +64,18 @@ func (p *Player) Tick(event tl.Event) {
 	if event.Type == tl.EventKey && !p.Finished { // Is it a keyboard event?
 		switch event.Key { // If so, switch on the pressed key.
 		case tl.KeyArrowRight:
-			p.Action <- doric.ActionRight
+			p.Action <- doric.CommandRight
 		case tl.KeyArrowLeft:
-			p.Action <- doric.ActionLeft
+			p.Action <- doric.CommandLeft
 		case tl.KeyArrowDown:
-			p.Action <- doric.ActionDown
+			p.Action <- doric.CommandDown
 		case tl.KeyTab:
-			p.Action <- doric.ActionRotate
+			p.Action <- doric.CommandRotate
 		}
 
 		switch event.Ch {
 		case 'p', 'P':
-			p.Action <- doric.ActionPause
+			p.Action <- doric.CommandPause
 		}
 	}
 }

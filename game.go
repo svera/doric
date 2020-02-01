@@ -4,13 +4,13 @@ import (
 	"time"
 )
 
-// Possible actions coming from the player
+// Possible commands coming from the player
 const (
-	ActionLeft = iota
-	ActionRight
-	ActionDown
-	ActionRotate
-	ActionPause
+	CommandLeft = iota
+	CommandRight
+	CommandDown
+	CommandRotate
+	CommandPause
 )
 
 // Config holds different parameters related with the game
@@ -43,31 +43,31 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 			close(events)
 		}()
 
-		pit := NewPit(p.Height(), p.Width())
+		pit := NewPit(p.height(), p.width())
 		copy(pit, p)
 		current := NewPiece(rand)
 		next := NewPiece(rand)
-		current.X = pit.Width() / 2
+		current.X = pit.width() / 2
 		combo := 1
 		slowdown := cfg.InitialSlowdown
 		level := 1
 		paused := false
 
-		sendEventRenewed(events, current, next)
+		sendEventRenewed(events, pit, current, next)
 		for {
 			select {
 			case act := <-input:
 				switch act {
-				case ActionLeft:
+				case CommandLeft:
 					current.left(pit)
-				case ActionRight:
+				case CommandRight:
 					current.right(pit)
-				case ActionDown:
+				case CommandDown:
 					current.down(pit)
 					ticks = 0
-				case ActionRotate:
+				case CommandRotate:
 					current.rotate()
-				case ActionPause:
+				case CommandPause:
 					paused = !paused
 				}
 				sendEventUpdated(events, current, paused)
@@ -100,11 +100,11 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 					removed = pit.markTilesToRemove()
 				}
 				combo = 1
-				current.copy(next, pit.Width()/2)
+				current.copy(next, pit.width()/2)
 				next.randomize(rand)
-				sendEventRenewed(events, current, next)
+				sendEventRenewed(events, pit, current, next)
 
-				if pit.Cell(pit.Width()/2, 0) != Empty {
+				if pit.Cell(pit.width()/2, 0) != Empty {
 					ticker.Stop()
 					return
 				}
@@ -123,7 +123,7 @@ func sendEventUpdated(events chan<- interface{}, current *Piece, paused bool) {
 }
 
 func sendEventScored(events chan<- interface{}, pit Pit, total, combo, level int) {
-	p := NewPit(pit.Height(), pit.Width())
+	p := NewPit(pit.height(), pit.width())
 	for i := range pit {
 		copy(p[i], pit[i])
 	}
@@ -135,8 +135,13 @@ func sendEventScored(events chan<- interface{}, pit Pit, total, combo, level int
 	}
 }
 
-func sendEventRenewed(events chan<- interface{}, current, next *Piece) {
+func sendEventRenewed(events chan<- interface{}, pit Pit, current, next *Piece) {
+	p := NewPit(pit.height(), pit.width())
+	for i := range pit {
+		copy(p[i], pit[i])
+	}
 	events <- EventRenewed{
+		Pit:     p,
 		Current: *current,
 		Next:    *next,
 	}

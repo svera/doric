@@ -41,14 +41,14 @@ func (p *Piece) left(pit Pit) {
 // right moves the piece to the right in the pit if that position is empty
 // and not out of bounds
 func (p *Piece) right(pit Pit) {
-	if p.X < pit.Width()-1 && pit.Cell(p.X+1, p.Y) == Empty {
+	if p.X < pit.width()-1 && pit.Cell(p.X+1, p.Y) == Empty {
 		p.X++
 	}
 }
 
 // down moves the current piece down in the pit. If the piece cannot fall further, returns false.
 func (p *Piece) down(pit Pit) bool {
-	if p.Y < pit.Height()-1 && pit.Cell(p.X, p.Y+1) == Empty {
+	if p.Y < pit.height()-1 && pit.Cell(p.X, p.Y+1) == Empty {
 		p.Y++
 		return true
 	}

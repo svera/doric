@@ -52,7 +52,7 @@ func TestPause(t *testing.T) {
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.ActionPause
+	input <- doric.CommandPause
 
 	select {
 	case ev := <-events:
@@ -65,7 +65,7 @@ func TestPause(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionPause
+	input <- doric.CommandPause
 
 	select {
 	case ev := <-events:
@@ -90,7 +90,7 @@ func TestInput(t *testing.T) {
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.ActionLeft
+	input <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
@@ -104,7 +104,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionRight
+	input <- doric.CommandRight
 
 	select {
 	case ev := <-events:
@@ -118,7 +118,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionDown
+	input <- doric.CommandDown
 
 	select {
 	case ev := <-events:
@@ -132,7 +132,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionRotate
+	input <- doric.CommandRotate
 
 	select {
 	case ev := <-events:
@@ -160,7 +160,7 @@ func TestPitBounds(t *testing.T) {
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.ActionLeft
+	input <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
@@ -174,7 +174,7 @@ func TestPitBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionRight
+	input <- doric.CommandRight
 
 	select {
 	case ev := <-events:
@@ -188,7 +188,7 @@ func TestPitBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.ActionDown
+	input <- doric.CommandDown
 
 	select {
 	case ev := <-events:
@@ -210,6 +210,7 @@ func TestScored(t *testing.T) {
 		pit                     doric.Pit
 		rand                    *doric.MockRandomizer
 		expectedPit             doric.Pit
+		expectedRenewedPit      doric.Pit
 		expectedRemoved         int
 		expectedLevel           int
 		expectedCurrent         [3]int
@@ -227,6 +228,11 @@ func TestScored(t *testing.T) {
 				[]int{0, -1, 0, -1, 0, 0},
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
+			},
+			expectedRenewedPit: doric.Pit{
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{1, 0, 0, 0, 0, 0},
 			},
 			expectedRemoved: 12,
 			expectedLevel:   1,
@@ -246,6 +252,11 @@ func TestScored(t *testing.T) {
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
 			},
+			expectedRenewedPit: doric.Pit{
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{1, 0, 0, 0, 0, 0},
+			},
 			expectedRemoved: 12,
 			expectedLevel:   2,
 			expectedCurrent: [3]int{4, 5, 6},
@@ -263,6 +274,11 @@ func TestScored(t *testing.T) {
 				[]int{-1, 0, 0, -1, 0, -1},
 				[]int{2, -1, 0, -1, -1, 2},
 				[]int{3, 2, -1, -1, 2, 3},
+			},
+			expectedRenewedPit: doric.Pit{
+				[]int{0, 0, 0, 0, 0, 0},
+				[]int{2, 0, 0, 0, 0, 2},
+				[]int{3, 2, 0, 0, 2, 3},
 			},
 			expectedRemoved: 8,
 			expectedLevel:   1,
@@ -302,6 +318,9 @@ func TestScored(t *testing.T) {
 								tt.expectedCurrent,
 								asserted.Current.Tiles,
 							)
+						}
+						if !reflect.DeepEqual(tt.expectedRenewedPit, asserted.Pit) {
+							t.Errorf("Expected pit %v but got %v", tt.expectedRenewedPit, asserted.Pit)
 						}
 						return
 					}

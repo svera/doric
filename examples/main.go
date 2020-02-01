@@ -12,7 +12,7 @@ import (
 const (
 	offsetX       = 32
 	offsetY       = 5
-	pithWidth     = 6
+	pitWidth      = 6
 	pitHeight     = 13
 	pointsPerTile = 10
 )
@@ -24,10 +24,9 @@ func main() {
 	actions := make(chan int)
 	app := tl.NewGame()
 	app.Screen().SetFps(60)
-	pit := doric.NewPit(pitHeight, pithWidth)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
-	pitEntity := NewPit(pit, offsetX, offsetY)
+	pitEntity := NewPit(offsetX, offsetY, pitWidth, pitHeight)
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
 	playerEntity := NewPlayer(actions, message, offsetX, offsetY)
 	nextPieceEntity := NewNext(offsetX+15, offsetY+5)
@@ -37,7 +36,7 @@ func main() {
 	})
 	setUpMainLevel(mainLevel, pitEntity, playerEntity, nextPieceEntity, message)
 	app.Screen().SetLevel(mainLevel)
-	startGameLogic(actions, pit, pitEntity, playerEntity, nextPieceEntity)
+	startGameLogic(actions, pitEntity, playerEntity, nextPieceEntity)
 	app.Start()
 }
 
@@ -49,7 +48,8 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
 	mainLevel.AddEntity(level)
 }
 
-func startGameLogic(actions chan int, pit doric.Pit, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+	pit := doric.NewPit(pitHeight, pitWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         10,
@@ -63,6 +63,7 @@ func startGameLogic(actions chan int, pit doric.Pit, pitEntity *Pit, playerEntit
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Current
 	nxt := firstUpdate.(doric.EventRenewed).Next
+	pitEntity.Pit = pit
 	playerEntity.Current = &cur
 	nextPieceEntity.Piece = &nxt
 
@@ -78,11 +79,11 @@ func startGameLogic(actions chan int, pit doric.Pit, pitEntity *Pit, playerEntit
 				points += t.Removed * t.Combo * pointsPerTile
 				score.SetText(fmt.Sprintf("Score: %d", points))
 				level.SetText(fmt.Sprintf("Level: %d", t.Level))
-				pitEntity.Pit = t.Pit
 			case doric.EventUpdated:
 				playerEntity.Current = &t.Current
 				playerEntity.Paused = t.Paused
 			case doric.EventRenewed:
+				pitEntity.Pit = t.Pit
 				playerEntity.Current = &t.Current
 				nextPieceEntity.Piece = &t.Next
 			}

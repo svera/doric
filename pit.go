@@ -34,8 +34,8 @@ func (p Pit) markTilesToRemove() int {
 }
 
 func (p Pit) checkHorizontalLines(remove map[Coords]struct{}) {
-	for y := p.Height() - 1; y >= 0; y-- {
-		for x := 0; x < p.Width()-2; x++ {
+	for y := p.height() - 1; y >= 0; y-- {
+		for x := 0; x < p.width()-2; x++ {
 			if p[y][x] == Empty || p[y][x] == Remove {
 				continue
 			}
@@ -49,8 +49,8 @@ func (p Pit) checkHorizontalLines(remove map[Coords]struct{}) {
 }
 
 func (p Pit) checkVerticalLines(remove map[Coords]struct{}) {
-	for x := 0; x < p.Width(); x++ {
-		for y := p.Height() - 1; y > 1; y-- {
+	for x := 0; x < p.width(); x++ {
+		for y := p.height() - 1; y > 1; y-- {
 			if p[y][x] == Empty || p[y][x] == Remove {
 				break
 			}
@@ -64,9 +64,9 @@ func (p Pit) checkVerticalLines(remove map[Coords]struct{}) {
 }
 
 func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
-	for y := p.Height() - 1; y > 1; y-- {
+	for y := p.height() - 1; y > 1; y-- {
 		// Checks for tiles to be removed in diagonal / lines
-		for x := 0; x < p.Width()-2 && y > 1; x++ {
+		for x := 0; x < p.width()-2 && y > 1; x++ {
 			if p[y][x] == Empty || p[y][x] == Remove {
 				continue
 			}
@@ -77,7 +77,7 @@ func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 			}
 		}
 		// Checks for tiles to be removed in diagonal \ lines
-		for x := p.Width() - 1; x > 1 && y > 1; x-- {
+		for x := p.width() - 1; x > 1 && y > 1; x-- {
 			if p[y][x] == Empty {
 				continue
 			}
@@ -96,20 +96,20 @@ func (p Pit) Cell(x, y int) int {
 }
 
 // Width returns pit's width
-func (p Pit) Width() int {
+func (p Pit) width() int {
 	return len(p[0])
 }
 
 // Height returns pit's height
-func (p Pit) Height() int {
+func (p Pit) height() int {
 	return len(p)
 }
 
 // settle moves down all tiles which have empty cells below
 func (p Pit) settle() {
-	for x := 0; x < p.Width(); x++ {
+	for x := 0; x < p.width(); x++ {
 		moveDown := 0
-		for y := p.Height() - 1; y >= 0; y-- {
+		for y := p.height() - 1; y >= 0; y-- {
 			// This cell contains a tile to be removed, do not put it in the slice of tiles to settle again
 			if p[y][x] < 0 {
 				p[y][x] = Empty

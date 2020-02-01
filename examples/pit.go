@@ -9,15 +9,18 @@ import (
 type Pit struct {
 	*tl.Entity
 	Pit     doric.Pit
+	width   int
+	height  int
 	offsetX int
 	offsetY int
 }
 
 // NewPit returns a new pit instance
-func NewPit(p doric.Pit, offsetX int, offsetY int) *Pit {
+func NewPit(offsetX, offsetY, width, height int) *Pit {
 	return &Pit{
-		Pit:     p,
-		Entity:  tl.NewEntity(offsetX, offsetY, p.Width(), p.Height()),
+		Entity:  tl.NewEntity(offsetX, offsetY, width, height),
+		width:   width,
+		height:  height,
 		offsetX: offsetX,
 		offsetY: offsetY,
 	}
@@ -27,8 +30,8 @@ func NewPit(p doric.Pit, offsetX int, offsetY int) *Pit {
 func (p *Pit) Draw(screen *tl.Screen) {
 	var x, y int
 
-	for y = 0; y <= p.Pit.Height(); y++ {
-		for x = 0; x <= p.Pit.Width(); x++ {
+	for y = 0; y <= p.height; y++ {
+		for x = 0; x <= p.width; x++ {
 			// Pit left border
 			if x == 0 {
 				screen.RenderCell(p.offsetX, p.offsetY+y, &tl.Cell{
@@ -37,15 +40,15 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				})
 			}
 			// Pit right border
-			if x == p.Pit.Width() {
-				screen.RenderCell(p.offsetX+p.Pit.Width()*2+1, p.offsetY+y, &tl.Cell{
+			if x == p.width {
+				screen.RenderCell(p.offsetX+p.width*2+1, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
 				continue
 			}
 			// Pit bottom
-			if y == p.Pit.Height() {
+			if y == p.height {
 				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
@@ -57,27 +60,27 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				continue
 			}
 			// Tiles
-			if p.Pit.Cell(x, y) > doric.Empty {
-				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
-					Bg: colors[p.Pit.Cell(x, y)],
-					Fg: tl.ColorBlack,
-					Ch: '[',
-				})
-				screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
-					Bg: colors[p.Pit.Cell(x, y)],
-					Fg: tl.ColorBlack,
-					Ch: ']',
-				})
-			} else {
-				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
-					Bg: colors[p.Pit.Cell(x, y)], // Failed with index out of range, check
-					Ch: ' ',
-				})
-				screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
-					Bg: colors[p.Pit.Cell(x, y)],
-					Ch: ' ',
-				})
+			if p.Pit.Cell(x, y) >= doric.Empty {
+				p.renderTile(screen, x, y)
 			}
 		}
 	}
+}
+
+func (p *Pit) renderTile(screen *tl.Screen, x, y int) {
+	leftCh, rightCh := '[', ']'
+
+	if p.Pit.Cell(x, y) == doric.Empty {
+		leftCh, rightCh = ' ', ' '
+	}
+	screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
+		Bg: colors[p.Pit.Cell(x, y)],
+		Fg: tl.ColorBlack,
+		Ch: leftCh,
+	})
+	screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
+		Bg: colors[p.Pit.Cell(x, y)],
+		Fg: tl.ColorBlack,
+		Ch: rightCh,
+	})
 }

@@ -17,6 +17,7 @@ type EventScored struct {
 
 // EventRenewed is sent when the current and next pieces are renewed
 type EventRenewed struct {
+	Pit     Pit
 	Current Piece
 	Next    Piece
 }
