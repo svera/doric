@@ -90,11 +90,6 @@ func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 	}
 }
 
-// Cell returns the passed coordinates cell value
-func (p Pit) Cell(x, y int) int {
-	return p[y][x]
-}
-
 // Width returns pit's width
 func (p Pit) width() int {
 	return len(p[0])

@@ -27,11 +27,11 @@ type Config struct {
 
 // Play starts the game loop in a separate thread, making pieces fall to the bottom of the pit at gradually quicker speeds
 // as level increases.
-// Game can be controlled sending action codes to the input channel. Game updates are communicated as events in the returned
+// Game can be controlled sending command codes to the commands channel. Game updates are communicated as events in the returned
 // channel.
 // Game ends when no more new pieces can enter the pit, and this will be signaled with the closing of the
 // events channel.
-func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface{} {
+func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interface{} {
 	events := make(chan interface{})
 
 	go func() {
@@ -56,8 +56,8 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 		sendEventRenewed(events, pit, current, next)
 		for {
 			select {
-			case act := <-input:
-				switch act {
+			case comm := <-commands:
+				switch comm {
 				case CommandLeft:
 					current.left(pit)
 				case CommandRight:
@@ -104,7 +104,7 @@ func Play(p Pit, rand Randomizer, cfg Config, input <-chan int) <-chan interface
 				next.randomize(rand)
 				sendEventRenewed(events, pit, current, next)
 
-				if pit.Cell(pit.width()/2, 0) != Empty {
+				if pit[0][pit.width()/2] != Empty {
 					ticker.Stop()
 					return
 				}

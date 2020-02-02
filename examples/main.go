@@ -48,7 +48,7 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
 	mainLevel.AddEntity(level)
 }
 
-func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+func startGameLogic(commands chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
 	pit := doric.NewPit(pitHeight, pitWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
@@ -58,7 +58,7 @@ func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, next
 
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	events := doric.Play(pit, r, cfg, actions)
+	events := doric.Play(pit, r, cfg, commands)
 
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Current
@@ -71,7 +71,7 @@ func startGameLogic(actions chan int, pitEntity *Pit, playerEntity *Player, next
 		points := 0
 		defer func() {
 			playerEntity.Finished = true
-			close(actions)
+			close(commands)
 		}()
 		for ev := range events {
 			switch t := ev.(type) {

@@ -60,7 +60,7 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				continue
 			}
 			// Tiles
-			if p.Pit.Cell(x, y) >= doric.Empty {
+			if p.Pit[y][x] >= doric.Empty {
 				p.renderTile(screen, x, y)
 			}
 		}
@@ -70,16 +70,16 @@ func (p *Pit) Draw(screen *tl.Screen) {
 func (p *Pit) renderTile(screen *tl.Screen, x, y int) {
 	leftCh, rightCh := '[', ']'
 
-	if p.Pit.Cell(x, y) == doric.Empty {
+	if p.Pit[y][x] == doric.Empty {
 		leftCh, rightCh = ' ', ' '
 	}
 	screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit.Cell(x, y)],
+		Bg: colors[p.Pit[y][x]],
 		Fg: tl.ColorBlack,
 		Ch: leftCh,
 	})
 	screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit.Cell(x, y)],
+		Bg: colors[p.Pit[y][x]],
 		Fg: tl.ColorBlack,
 		Ch: rightCh,
 	})
