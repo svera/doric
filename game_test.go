@@ -8,11 +8,6 @@ import (
 	"github.com/svera/doric"
 )
 
-const (
-	pithWidth = 6
-	pitHeight = 13
-)
-
 func getConfig() doric.Config {
 	return doric.Config{
 		NumberTilesForNextLevel: 10,
@@ -23,10 +18,10 @@ func getConfig() doric.Config {
 
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(1, pithWidth)
+	pit := doric.NewPit(1, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{0}}
 	input := make(chan int)
-	pit[0][3] = 1
+	pit[3][0] = 1
 	events := doric.Play(pit, r, getConfig(), input)
 
 	for {
@@ -43,7 +38,7 @@ func TestGameOver(t *testing.T) {
 
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(pitHeight, pithWidth)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{1}}
 	input := make(chan int)
 	events := doric.Play(pit, r, getConfig(), input)
@@ -81,7 +76,7 @@ func TestPause(t *testing.T) {
 
 func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(pitHeight, pithWidth)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
 	input := make(chan int)
 	events := doric.Play(pit, r, getConfig(), input)
@@ -219,21 +214,21 @@ func TestScored(t *testing.T) {
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
 			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: doric.Pit{
+			pit: transpose(doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
 				[]int{1, 1, 1, 0, 1, 1},
-			},
-			expectedPit: doric.Pit{
+			}),
+			expectedPit: transpose(doric.Pit{
 				[]int{0, -1, 0, -1, 0, 0},
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
-			},
-			expectedRenewedPit: doric.Pit{
+			}),
+			expectedRenewedPit: transpose(doric.Pit{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{1, 0, 0, 0, 0, 0},
-			},
+			}),
 			expectedRemoved: 12,
 			expectedLevel:   1,
 			expectedCurrent: [3]int{4, 5, 6},
@@ -242,21 +237,21 @@ func TestScored(t *testing.T) {
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
 			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: doric.Pit{
+			pit: transpose(doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
 				[]int{1, 1, 1, 0, 1, 1},
-			},
-			expectedPit: doric.Pit{
+			}),
+			expectedPit: transpose(doric.Pit{
 				[]int{0, -1, 0, -1, 0, 0},
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
-			},
-			expectedRenewedPit: doric.Pit{
+			}),
+			expectedRenewedPit: transpose(doric.Pit{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{1, 0, 0, 0, 0, 0},
-			},
+			}),
 			expectedRemoved: 12,
 			expectedLevel:   2,
 			expectedCurrent: [3]int{4, 5, 6},
@@ -265,21 +260,21 @@ func TestScored(t *testing.T) {
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
 			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: doric.Pit{
+			pit: transpose(doric.Pit{
 				[]int{1, 0, 0, 0, 0, 1},
 				[]int{2, 1, 0, 0, 1, 2},
 				[]int{3, 2, 1, 0, 2, 3},
-			},
-			expectedPit: doric.Pit{
+			}),
+			expectedPit: transpose(doric.Pit{
 				[]int{-1, 0, 0, -1, 0, -1},
 				[]int{2, -1, 0, -1, -1, 2},
 				[]int{3, 2, -1, -1, 2, 3},
-			},
-			expectedRenewedPit: doric.Pit{
+			}),
+			expectedRenewedPit: transpose(doric.Pit{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{2, 0, 0, 0, 0, 2},
 				[]int{3, 2, 0, 0, 2, 3},
-			},
+			}),
 			expectedRemoved: 8,
 			expectedLevel:   1,
 			expectedCurrent: [3]int{4, 5, 6},
@@ -345,22 +340,22 @@ func TestScoredCombo(t *testing.T) {
 			name:                    "Scored with combo",
 			numberTilesForNextLevel: 20,
 			rand:                    &doric.MockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
-			pit: doric.Pit{
+			pit: transpose(doric.Pit{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 2, 2, 0, 1, 1},
-			},
+			}),
 			expectedPits: []doric.Pit{
-				doric.Pit{
+				transpose(doric.Pit{
 					[]int{0, 0, 0, 3, 0, 0},
 					[]int{0, 0, 0, 2, 0, 0},
 					[]int{0, 2, 2, -1, -1, -1},
-				},
-				doric.Pit{
+				}),
+				transpose(doric.Pit{
 					[]int{0, 0, 0, 0, 0, 0},
 					[]int{0, 0, 0, 3, 0, 0},
 					[]int{0, -1, -1, -1, 0, 0},
-				},
+				}),
 			},
 		},
 	}
@@ -400,4 +395,20 @@ func TestScoredCombo(t *testing.T) {
 			}
 		})
 	}
+}
+
+// transpose swaps values between columns and rows in a pit,
+// as visually is more natural to put all X values per row in a single line
+// (as they appear on actual games)
+// and this can only be done by putting those in the Y index of the pit type.
+func transpose(slice doric.Pit) doric.Pit {
+	xl := len(slice[0])
+	yl := len(slice)
+	result := doric.NewPit(yl, xl)
+	for i := 0; i < xl; i++ {
+		for j := 0; j < yl; j++ {
+			result[i][j] = slice[j][i]
+		}
+	}
+	return result
 }

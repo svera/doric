@@ -5,7 +5,7 @@ import (
 	"github.com/svera/doric"
 )
 
-// Pit represents a pit on screen following Termloop's Drawable interface
+// Pit represents a pit on screen implementing Termloop's Drawable interface
 type Pit struct {
 	*tl.Entity
 	Pit     doric.Pit
@@ -16,7 +16,7 @@ type Pit struct {
 }
 
 // NewPit returns a new pit instance
-func NewPit(offsetX, offsetY, width, height int) *Pit {
+func NewPit(offsetX, offsetY, height, width int) *Pit {
 	return &Pit{
 		Entity:  tl.NewEntity(offsetX, offsetY, width, height),
 		width:   width,
@@ -60,7 +60,7 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				continue
 			}
 			// Tiles
-			if p.Pit[y][x] >= doric.Empty {
+			if p.Pit[x][y] >= doric.Empty {
 				p.renderTile(screen, x, y)
 			}
 		}
@@ -70,16 +70,16 @@ func (p *Pit) Draw(screen *tl.Screen) {
 func (p *Pit) renderTile(screen *tl.Screen, x, y int) {
 	leftCh, rightCh := '[', ']'
 
-	if p.Pit[y][x] == doric.Empty {
+	if p.Pit[x][y] == doric.Empty {
 		leftCh, rightCh = ' ', ' '
 	}
 	screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit[y][x]],
+		Bg: colors[p.Pit[x][y]],
 		Fg: tl.ColorBlack,
 		Ch: leftCh,
 	})
 	screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit[y][x]],
+		Bg: colors[p.Pit[x][y]],
 		Fg: tl.ColorBlack,
 		Ch: rightCh,
 	})

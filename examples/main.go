@@ -12,8 +12,6 @@ import (
 const (
 	offsetX       = 32
 	offsetY       = 5
-	pitWidth      = 6
-	pitHeight     = 13
 	pointsPerTile = 10
 )
 
@@ -26,7 +24,7 @@ func main() {
 	app.Screen().SetFps(60)
 	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
-	pitEntity := NewPit(offsetX, offsetY, pitWidth, pitHeight)
+	pitEntity := NewPit(offsetX, offsetY, doric.StandardHeight, doric.StandardWidth)
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
 	playerEntity := NewPlayer(actions, message, offsetX, offsetY)
 	nextPieceEntity := NewNext(offsetX+15, offsetY+5)
@@ -49,7 +47,7 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
 }
 
 func startGameLogic(commands chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
-	pit := doric.NewPit(pitHeight, pitWidth)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         10,

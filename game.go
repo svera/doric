@@ -104,7 +104,7 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 				next.randomize(rand)
 				sendEventRenewed(events, pit, current, next)
 
-				if pit[0][pit.width()/2] != Empty {
+				if pit[pit.width()/2][0] != Empty {
 					ticker.Stop()
 					return
 				}
