@@ -15,38 +15,27 @@ const (
 	pointsPerTile = 10
 )
 
-var score *tl.Text
-var level *tl.Text
-
 func main() {
-	actions := make(chan int)
+	commands := make(chan int)
 	app := tl.NewGame()
 	app.Screen().SetFps(60)
-	score = tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
-	level = tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
-	pitEntity := NewPit(offsetX, offsetY, doric.StandardHeight, doric.StandardWidth)
-	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
-	playerEntity := NewPlayer(actions, message, offsetX, offsetY)
-	nextPieceEntity := NewNext(offsetX+15, offsetY+5)
 
 	mainLevel := tl.NewBaseLevel(tl.Cell{
 		Bg: tl.ColorBlack,
 	})
-	setUpMainLevel(mainLevel, pitEntity, playerEntity, nextPieceEntity, message)
 	app.Screen().SetLevel(mainLevel)
-	startGameLogic(actions, pitEntity, playerEntity, nextPieceEntity)
+	entities := startGameLogic(commands)
+	setUpMainLevel(mainLevel, entities)
 	app.Start()
 }
 
-func setUpMainLevel(mainLevel *tl.BaseLevel, entities ...tl.Drawable) {
+func setUpMainLevel(mainLevel *tl.BaseLevel, entities []tl.Drawable) {
 	for _, ent := range entities {
 		mainLevel.AddEntity(ent)
 	}
-	mainLevel.AddEntity(score)
-	mainLevel.AddEntity(level)
 }
 
-func startGameLogic(commands chan int, pitEntity *Pit, playerEntity *Player, nextPieceEntity *Next) {
+func startGameLogic(commands chan int) []tl.Drawable {
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
@@ -61,9 +50,13 @@ func startGameLogic(commands chan int, pitEntity *Pit, playerEntity *Player, nex
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Current
 	nxt := firstUpdate.(doric.EventRenewed).Next
-	pitEntity.Pit = pit
-	playerEntity.Current = &cur
-	nextPieceEntity.Piece = &nxt
+
+	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
+	pitEntity := NewPit(pit, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth)
+	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY)
+	nextPieceEntity := NewNext(&nxt, offsetX+15, offsetY+5)
+	score := tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
+	level := tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 
 	go func() {
 		points := 0
@@ -87,4 +80,6 @@ func startGameLogic(commands chan int, pitEntity *Pit, playerEntity *Player, nex
 			}
 		}
 	}()
+
+	return []tl.Drawable{pitEntity, playerEntity, nextPieceEntity, message, score, level}
 }

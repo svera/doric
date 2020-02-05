@@ -14,9 +14,10 @@ type Next struct {
 }
 
 // NewNext returns a new Next instance
-func NewNext(offsetX int, offsetY int) *Next {
+func NewNext(p *doric.Piece, offsetX int, offsetY int) *Next {
 	return &Next{
 		Entity:  tl.NewEntity(offsetX, offsetY, 1, 3),
+		Piece:   p,
 		offsetX: offsetX,
 		offsetY: offsetY,
 	}

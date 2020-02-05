@@ -18,8 +18,9 @@ type Player struct {
 }
 
 // NewPlayer returns a new Player instance
-func NewPlayer(action chan<- int, message tl.Drawable, offsetX int, offsetY int) *Player {
+func NewPlayer(c *doric.Piece, action chan<- int, message tl.Drawable, offsetX int, offsetY int) *Player {
 	return &Player{
+		Current: c,
 		Action:  action,
 		offsetX: offsetX,
 		offsetY: offsetY,

@@ -16,9 +16,10 @@ type Pit struct {
 }
 
 // NewPit returns a new pit instance
-func NewPit(offsetX, offsetY, height, width int) *Pit {
+func NewPit(p doric.Pit, offsetX, offsetY, height, width int) *Pit {
 	return &Pit{
 		Entity:  tl.NewEntity(offsetX, offsetY, width, height),
+		Pit:     p,
 		width:   width,
 		height:  height,
 		offsetX: offsetX,

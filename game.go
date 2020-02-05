@@ -17,7 +17,7 @@ const (
 type Config struct {
 	// How many tiles a player has to destroy to advance to the next level
 	NumberTilesForNextLevel int
-	// As the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
+	// If the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
 	// at a speed of 10*200 = 0.5 cells/sec
 	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
 	InitialSlowdown int
@@ -33,25 +33,23 @@ type Config struct {
 // events channel.
 func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interface{} {
 	events := make(chan interface{})
+	pit := NewPit(p.height(), p.width())
+	copy(pit, p)
+	current := NewPiece(rand)
+	next := NewPiece(rand)
+	current.X = pit.width() / 2
+	combo := 1
+	slowdown := cfg.InitialSlowdown
+	level := 1
+	paused := false
+	ticker := time.NewTicker(cfg.Frequency)
+	ticks := 0
+	totalRemoved := 0
 
 	go func() {
-		ticker := time.NewTicker(cfg.Frequency)
-		ticks := 0
-		totalRemoved := 0
-
 		defer func() {
 			close(events)
 		}()
-
-		pit := NewPit(p.height(), p.width())
-		copy(pit, p)
-		current := NewPiece(rand)
-		next := NewPiece(rand)
-		current.X = pit.width() / 2
-		combo := 1
-		slowdown := cfg.InitialSlowdown
-		level := 1
-		paused := false
 
 		sendEventRenewed(events, pit, current, next)
 		for {

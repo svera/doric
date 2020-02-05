@@ -14,7 +14,7 @@ func Example() {
 		Frequency:               200 * time.Millisecond,
 	}
 	input := make(chan int)
-	pit := doric.NewPit(13, 6)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	source := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(source)
 
