@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	tl "github.com/JoelOtter/termloop"
 	"github.com/svera/doric"
 )
@@ -13,10 +15,11 @@ type Pit struct {
 	height  int
 	offsetX int
 	offsetY int
+	mux     sync.Locker
 }
 
 // NewPit returns a new pit instance
-func NewPit(p doric.Pit, offsetX, offsetY, height, width int) *Pit {
+func NewPit(p doric.Pit, offsetX, offsetY, height, width int, mux sync.Locker) *Pit {
 	return &Pit{
 		Entity:  tl.NewEntity(offsetX, offsetY, width, height),
 		Pit:     p,
@@ -24,6 +27,7 @@ func NewPit(p doric.Pit, offsetX, offsetY, height, width int) *Pit {
 		height:  height,
 		offsetX: offsetX,
 		offsetY: offsetY,
+		mux:     mux,
 	}
 }
 
@@ -61,9 +65,11 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				continue
 			}
 			// Tiles
+			p.mux.Lock()
 			if p.Pit[x][y] >= doric.Empty {
 				p.renderTile(screen, x, y)
 			}
+			p.mux.Unlock()
 		}
 	}
 }

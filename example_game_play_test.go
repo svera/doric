@@ -13,24 +13,31 @@ func Example() {
 		InitialSlowdown:         10,
 		Frequency:               200 * time.Millisecond,
 	}
-	input := make(chan int)
+	command := make(chan int)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	source := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(source)
 
 	// Start the game and return game events in the events channel
-	events := doric.Play(pit, rnd, cfg, input)
+	events := doric.Play(pit, rnd, cfg, command)
 
-	// Here you would need to start the game loop, manage input,
-	// show graphics on screen, etc.
+	defer func() {
+		close(command)
+		// events channel will be closed when game is over
+	}()
 
-	// Listen for game events and act accordingly
-	go func() {
-		defer func() {
-			close(input)
-			// events channel will be closed when game is over
-		}()
-		for ev := range events {
+	// Update game every 16 ms ~ 60 hz
+	tick := time.Tick(16 * time.Millisecond)
+
+	// Game loop
+	for {
+		// Listen for game events and act accordingly
+		select {
+		case ev, open := <-events:
+			if !open {
+				// game over, do whatever
+				break
+			}
 			switch ev.(type) {
 			case doric.EventScored:
 				// Do whatever
@@ -39,6 +46,9 @@ func Example() {
 			case doric.EventRenewed:
 				// Do whatever
 			}
+		case <-tick:
+			// Update screen, send commands to game through the
+			// command channel, etc.
 		}
-	}()
+	}
 }

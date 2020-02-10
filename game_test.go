@@ -20,9 +20,9 @@ func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(1, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{0}}
-	input := make(chan int)
+	command := make(chan int)
 	pit[3][0] = 1
-	events := doric.Play(pit, r, getConfig(), input)
+	events := doric.Play(pit, r, getConfig(), command)
 
 	for {
 		select {
@@ -36,18 +36,43 @@ func TestGameOver(t *testing.T) {
 	}
 }
 
-func TestPause(t *testing.T) {
+func TestQuit(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{1}}
-	input := make(chan int)
-	events := doric.Play(pit, r, getConfig(), input)
+	r := &doric.MockRandomizer{Values: []int{0}}
+	command := make(chan int)
+	events := doric.Play(pit, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.CommandPause
+	command <- doric.CommandQuit
+
+	for {
+		select {
+		case _, open := <-events:
+			if !open {
+				return
+			}
+		case <-timeout:
+			t.Errorf("Game should be quitted")
+		}
+	}
+}
+
+func TestPause(t *testing.T) {
+	timeout := time.After(1 * time.Second)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	command := make(chan int)
+	events := doric.Play(pit, r, getConfig(), command)
+
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
+
+	command <- doric.CommandPause
 
 	select {
 	case ev := <-events:
@@ -60,7 +85,63 @@ func TestPause(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandPause
+	command <- doric.CommandLeft
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 3 {
+				break
+			}
+			t.Errorf("Current piece must not be moved left if game is paused")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandRight
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 3 {
+				break
+			}
+			t.Errorf("Current piece must not be moved right if game is paused")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandDown
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.Y == 0 {
+				break
+			}
+			t.Errorf("Current piece must not be moved down if game is paused")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandRotate
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.Tiles == [3]int{1, 2, 3} {
+				break
+			}
+			t.Errorf("Current piece must not be rotated if game is paused")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandPause
 
 	select {
 	case ev := <-events:
@@ -78,14 +159,14 @@ func TestInput(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
-	input := make(chan int)
-	events := doric.Play(pit, r, getConfig(), input)
+	command := make(chan int)
+	events := doric.Play(pit, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.CommandLeft
+	command <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
@@ -99,7 +180,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandRight
+	command <- doric.CommandRight
 
 	select {
 	case ev := <-events:
@@ -113,7 +194,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandDown
+	command <- doric.CommandDown
 
 	select {
 	case ev := <-events:
@@ -127,7 +208,7 @@ func TestInput(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandRotate
+	command <- doric.CommandRotate
 
 	select {
 	case ev := <-events:
@@ -148,14 +229,14 @@ func TestPitBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(1, 1)
 	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
-	input := make(chan int)
-	events := doric.Play(pit, r, getConfig(), input)
+	command := make(chan int)
+	events := doric.Play(pit, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
 	<-events
 
-	input <- doric.CommandLeft
+	command <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
@@ -169,7 +250,7 @@ func TestPitBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandRight
+	command <- doric.CommandRight
 
 	select {
 	case ev := <-events:
@@ -183,7 +264,7 @@ func TestPitBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	input <- doric.CommandDown
+	command <- doric.CommandDown
 
 	select {
 	case ev := <-events:
@@ -287,8 +368,8 @@ func TestScored(t *testing.T) {
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			input := make(chan int)
-			events := doric.Play(tt.pit, tt.rand, cfg, input)
+			command := make(chan int)
+			events := doric.Play(tt.pit, tt.rand, cfg, command)
 
 			<-events
 
@@ -366,8 +447,8 @@ func TestScoredCombo(t *testing.T) {
 			cfg := getConfig()
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			input := make(chan int)
-			events := doric.Play(tt.pit, tt.rand, cfg, input)
+			command := make(chan int)
+			events := doric.Play(tt.pit, tt.rand, cfg, command)
 
 			<-events
 

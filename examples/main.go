@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	tl "github.com/JoelOtter/termloop"
@@ -51,10 +52,11 @@ func startGameLogic(commands chan int) []tl.Drawable {
 	cur := firstUpdate.(doric.EventRenewed).Current
 	nxt := firstUpdate.(doric.EventRenewed).Next
 
+	mux := &sync.Mutex{}
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
-	pitEntity := NewPit(pit, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth)
-	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY)
-	nextPieceEntity := NewNext(&nxt, offsetX+15, offsetY+5)
+	pitEntity := NewPit(pit, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth, mux)
+	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY, mux)
+	nextPieceEntity := NewNext(&nxt, offsetX+15, offsetY+5, mux)
 	score := tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level := tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 
@@ -67,16 +69,22 @@ func startGameLogic(commands chan int) []tl.Drawable {
 		for ev := range events {
 			switch t := ev.(type) {
 			case doric.EventScored:
+				mux.Lock()
 				points += t.Removed * t.Combo * pointsPerTile
 				score.SetText(fmt.Sprintf("Score: %d", points))
 				level.SetText(fmt.Sprintf("Level: %d", t.Level))
+				mux.Unlock()
 			case doric.EventUpdated:
+				mux.Lock()
 				playerEntity.Current = &t.Current
 				playerEntity.Paused = t.Paused
+				mux.Unlock()
 			case doric.EventRenewed:
+				mux.Lock()
 				pitEntity.Pit = t.Pit
 				playerEntity.Current = &t.Current
 				nextPieceEntity.Piece = &t.Next
+				mux.Unlock()
 			}
 		}
 	}()

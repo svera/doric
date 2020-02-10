@@ -11,6 +11,7 @@ const (
 	CommandDown
 	CommandRotate
 	CommandPause
+	CommandQuit
 )
 
 // Config holds different parameters related with the game
@@ -55,18 +56,24 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 		for {
 			select {
 			case comm := <-commands:
-				switch comm {
-				case CommandLeft:
-					current.left(pit)
-				case CommandRight:
-					current.right(pit)
-				case CommandDown:
-					current.down(pit)
-					ticks = 0
-				case CommandRotate:
-					current.rotate()
-				case CommandPause:
+				if comm == CommandPause {
 					paused = !paused
+				}
+				if comm == CommandQuit {
+					return
+				}
+				if !paused {
+					switch comm {
+					case CommandLeft:
+						current.left(pit)
+					case CommandRight:
+						current.right(pit)
+					case CommandDown:
+						current.down(pit)
+						ticks = 0
+					case CommandRotate:
+						current.rotate()
+					}
 				}
 				sendEventUpdated(events, current, paused)
 			case <-ticker.C:
