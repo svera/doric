@@ -219,7 +219,7 @@ func TestWait(t *testing.T) {
 	}
 }
 
-func TestInput(t *testing.T) {
+func TestCommands(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
 	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
