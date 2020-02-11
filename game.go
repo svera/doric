@@ -6,11 +6,19 @@ import (
 
 // Possible commands coming from the player
 const (
+	// Move the current piece left
 	CommandLeft = iota
+	// Move the current piece right
 	CommandRight
+	// Move the current piece down
 	CommandDown
+	// Rotate tiles in current piece
 	CommandRotate
+	// Pause / unpause game (for player use)
 	CommandPause
+	// Pause / unpase game (intended for internal use, e. g. stop game logic while play animation)
+	CommandWait
+	// Quit game
 	CommandQuit
 )
 
@@ -43,6 +51,7 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 	slowdown := cfg.InitialSlowdown
 	level := 1
 	paused := false
+	wait := false
 	ticker := time.NewTicker(cfg.Frequency)
 	ticks := 0
 	totalRemoved := 0
@@ -56,13 +65,18 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 		for {
 			select {
 			case comm := <-commands:
+				if comm == CommandWait {
+					wait = !wait
+					continue
+				}
 				if comm == CommandPause {
 					paused = !paused
+					continue
 				}
 				if comm == CommandQuit {
 					return
 				}
-				if !paused {
+				if !paused && !wait {
 					switch comm {
 					case CommandLeft:
 						current.left(pit)
@@ -75,9 +89,9 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 						current.rotate()
 					}
 				}
-				sendEventUpdated(events, current, paused)
+				sendEventUpdated(events, current)
 			case <-ticker.C:
-				if paused {
+				if paused || wait {
 					continue
 				}
 				if ticks != slowdown {
@@ -86,7 +100,7 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 				}
 				ticks = 0
 				if current.down(pit) {
-					sendEventUpdated(events, current, paused)
+					sendEventUpdated(events, current)
 					continue
 				}
 				pit.consolidate(current)
@@ -120,10 +134,9 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 	return events
 }
 
-func sendEventUpdated(events chan<- interface{}, current *Piece, paused bool) {
+func sendEventUpdated(events chan<- interface{}, current *Piece) {
 	events <- EventUpdated{
 		Current: *current,
-		Paused:  paused,
 	}
 }
 

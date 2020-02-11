@@ -77,7 +77,6 @@ func startGameLogic(commands chan int) []tl.Drawable {
 			case doric.EventUpdated:
 				mux.Lock()
 				playerEntity.Current = &t.Current
-				playerEntity.Paused = t.Paused
 				mux.Unlock()
 			case doric.EventRenewed:
 				mux.Lock()

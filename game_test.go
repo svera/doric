@@ -74,17 +74,6 @@ func TestPause(t *testing.T) {
 
 	command <- doric.CommandPause
 
-	select {
-	case ev := <-events:
-		if et, ok := ev.(doric.EventUpdated); ok {
-			if !et.Paused {
-				t.Errorf("Game must be paused")
-			}
-		}
-	case <-timeout:
-		t.Errorf("Test timed out")
-	}
-
 	command <- doric.CommandLeft
 
 	select {
@@ -140,15 +129,90 @@ func TestPause(t *testing.T) {
 	case <-timeout:
 		t.Errorf("Test timed out")
 	}
+}
 
-	command <- doric.CommandPause
+func TestWait(t *testing.T) {
+	timeout := time.After(1 * time.Second)
+	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	command := make(chan int)
+	cfg := getConfig()
+	cfg.Frequency = 10 * time.Second
+	events := doric.Play(pit, r, cfg, command)
+
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
+
+	command <- doric.CommandWait
+
+	command <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
 		if et, ok := ev.(doric.EventUpdated); ok {
-			if et.Paused {
-				t.Errorf("Game must not be paused")
+			if et.Current.X == 3 {
+				break
 			}
+			t.Errorf("Current piece must not be moved left if game is waiting")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandRight
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 3 {
+				break
+			}
+			t.Errorf("Current piece must not be moved right if game is waiting")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandDown
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.Y == 0 {
+				break
+			}
+			t.Errorf("Current piece must not be moved down if game is waiting")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandRotate
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.Tiles == [3]int{1, 2, 3} {
+				break
+			}
+			t.Errorf("Current piece must not be rotated if game is waiting")
+		}
+	case <-timeout:
+		t.Errorf("Test timed out")
+	}
+
+	command <- doric.CommandWait
+
+	command <- doric.CommandLeft
+
+	select {
+	case ev := <-events:
+		if et, ok := ev.(doric.EventUpdated); ok {
+			if et.Current.X == 2 {
+				break
+			}
+			t.Errorf("Current piece must be moved left if game is not waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")

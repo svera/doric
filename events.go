@@ -3,7 +3,6 @@ package doric
 // EventUpdated is sent as a response to a player action (moving the current piece or pausing the game)
 type EventUpdated struct {
 	Current Piece
-	Paused  bool
 }
 
 // EventScored is sent when the three or more tiles of the same color are aligned in the pit,

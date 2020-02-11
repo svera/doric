@@ -15,7 +15,7 @@ type Player struct {
 	offsetX  int
 	offsetY  int
 	message  tl.Drawable
-	Paused   bool
+	paused   bool
 	Finished bool
 	mux      sync.Locker
 }
@@ -35,13 +35,13 @@ func NewPlayer(c *doric.Piece, command chan<- int, message tl.Drawable, offsetX,
 // Draw draws the piece on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
-	defer p.mux.Unlock()
-	p.mux.Lock()
-	if p.Paused {
+	if p.paused {
 		p.message.(*tl.Text).SetPosition(offsetX+4, offsetY+5)
 		p.message.(*tl.Text).SetText("PAUSED")
 		return
 	}
+	defer p.mux.Unlock()
+	p.mux.Lock()
 	if p.Finished {
 		p.message.(*tl.Text).SetPosition(offsetX+2, offsetY+5)
 		p.message.(*tl.Text).SetText("GAME  OVER")
@@ -83,6 +83,7 @@ func (p *Player) Tick(event tl.Event) {
 		switch event.Ch {
 		case 'p', 'P':
 			p.Command <- doric.CommandPause
+			p.paused = !p.paused
 		}
 	}
 }
