@@ -3,15 +3,19 @@ package doric
 // maxTile is the maximum tile value a piece can contain
 const maxTile = 6
 
-// Randomizer defines a required method to get random integer values
+// Randomizer defines a required method to get random integer values.
+// Each value will map to one of the n possible tile types, where n = 6 by default.
 type Randomizer interface {
 	Intn(n int) int
 }
 
 // Piece represents a piece to fall in the pit
 type Piece struct {
+	// Tiles composing the piece. Tile at index 0 corresponds to upper one,
+	// while tile at index 2 refers to the bottom one.
 	Tiles [3]int
-	coords
+	// Position of the piece in the pit, using bottom tile as reference.
+	X, Y int
 }
 
 func newPiece(r Randomizer) *Piece {

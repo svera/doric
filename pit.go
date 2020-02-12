@@ -12,6 +12,12 @@ const (
 	StandardHeight = 13
 )
 
+// coords represent the coordinates of a tile or cell in the pit
+type coords struct {
+	x int
+	y int
+}
+
 // Pit is a slice of slices which represents the field of play, holding the tiles that are falling.
 // First index represents tiles in the X (horizontal) axis, second index refers to the Y (vertical) axis.
 type Pit [][]int
@@ -35,7 +41,7 @@ func (p Pit) markTilesToRemove() int {
 	p.checkDiagonalLines(remove)
 	for coords := range remove {
 		// Cells with negative values are cells with tiles to be removed
-		p[coords.X][coords.Y] = Remove
+		p[coords.x][coords.y] = Remove
 	}
 	return len(remove)
 }
