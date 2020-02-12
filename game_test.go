@@ -8,6 +8,23 @@ import (
 	"github.com/svera/doric"
 )
 
+// mockRandomizer implements the Randomizer interface to generate random integers
+type mockRandomizer struct {
+	Values  []int
+	current int
+}
+
+// Intn return numbers set in the Values property in the same order
+// If all numbers inside Values were returned, the slice is ran again from the beginning
+func (m *mockRandomizer) Intn(n int) int {
+	if m.current == len(m.Values) {
+		m.current = 0
+	}
+	val := m.Values[m.current]
+	m.current++
+	return val
+}
+
 func getConfig() doric.Config {
 	return doric.Config{
 		NumberTilesForNextLevel: 10,
@@ -19,7 +36,7 @@ func getConfig() doric.Config {
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(1, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{0}}
+	r := &mockRandomizer{Values: []int{0}}
 	command := make(chan int)
 	pit[3][0] = 1
 	events := doric.Play(pit, r, getConfig(), command)
@@ -39,7 +56,7 @@ func TestGameOver(t *testing.T) {
 func TestQuit(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{0}}
+	r := &mockRandomizer{Values: []int{0}}
 	command := make(chan int)
 	events := doric.Play(pit, r, getConfig(), command)
 
@@ -64,7 +81,7 @@ func TestQuit(t *testing.T) {
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	events := doric.Play(pit, r, getConfig(), command)
 
@@ -134,7 +151,7 @@ func TestPause(t *testing.T) {
 func TestWait(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	cfg := getConfig()
 	cfg.Frequency = 10 * time.Second
@@ -222,7 +239,7 @@ func TestWait(t *testing.T) {
 func TestCommands(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
-	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	events := doric.Play(pit, r, getConfig(), command)
 
@@ -292,7 +309,7 @@ func TestCommands(t *testing.T) {
 func TestPitBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	pit := doric.NewPit(1, 1)
-	r := &doric.MockRandomizer{Values: []int{0, 1, 2}}
+	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	events := doric.Play(pit, r, getConfig(), command)
 
@@ -348,7 +365,7 @@ func TestScored(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		pit                     doric.Pit
-		rand                    *doric.MockRandomizer
+		rand                    *mockRandomizer
 		expectedPit             doric.Pit
 		expectedRenewedPit      doric.Pit
 		expectedRemoved         int
@@ -358,7 +375,7 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
-			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: transpose(doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -381,7 +398,7 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
-			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: transpose(doric.Pit{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -404,7 +421,7 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
-			rand:                    &doric.MockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
 			pit: transpose(doric.Pit{
 				[]int{1, 0, 0, 0, 0, 1},
 				[]int{2, 1, 0, 0, 1, 2},
@@ -478,13 +495,13 @@ func TestScoredCombo(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		pit                     doric.Pit
-		rand                    *doric.MockRandomizer
+		rand                    *mockRandomizer
 		expectedPits            []doric.Pit
 	}{
 		{
 			name:                    "Scored with combo",
 			numberTilesForNextLevel: 20,
-			rand:                    &doric.MockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
+			rand:                    &mockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
 			pit: transpose(doric.Pit{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
