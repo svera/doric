@@ -14,8 +14,7 @@ type Piece struct {
 	Coords
 }
 
-// NewPiece returns a new Piece instance
-func NewPiece(r Randomizer) *Piece {
+func newPiece(r Randomizer) *Piece {
 	p := &Piece{
 		Tiles: [3]int{},
 	}

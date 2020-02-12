@@ -1,6 +1,6 @@
 package doric
 
-// EventUpdated is sent as a response to a player action (moving the current piece or pausing the game)
+// EventUpdated is sent as a response to a current piece movement
 type EventUpdated struct {
 	Current Piece
 }

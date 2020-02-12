@@ -44,8 +44,8 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 	events := make(chan interface{})
 	pit := NewPit(p.height(), p.width())
 	copy(pit, p)
-	current := NewPiece(rand)
-	next := NewPiece(rand)
+	current := newPiece(rand)
+	next := newPiece(rand)
 	current.X = pit.width() / 2
 	combo := 1
 	slowdown := cfg.InitialSlowdown
