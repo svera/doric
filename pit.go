@@ -29,7 +29,7 @@ func NewPit(rows, cols int) Pit {
 // markTilesToRemove scans pit lines looking for tiles to be removed, amd mark those tiles.
 // Tiles repeated in 3 or more consecutive positions horizontally, vertically or diagonally are to be removed.
 func (p Pit) markTilesToRemove() int {
-	remove := map[Coords]struct{}{}
+	remove := map[coords]struct{}{}
 	p.checkHorizontalLines(remove)
 	p.checkVerticalLines(remove)
 	p.checkDiagonalLines(remove)
@@ -40,37 +40,37 @@ func (p Pit) markTilesToRemove() int {
 	return len(remove)
 }
 
-func (p Pit) checkHorizontalLines(remove map[Coords]struct{}) {
+func (p Pit) checkHorizontalLines(remove map[coords]struct{}) {
 	for y := p.height() - 1; y >= 0; y-- {
 		for x := 0; x < p.width()-2; x++ {
 			if p[x][y] == Empty || p[x][y] == Remove {
 				continue
 			}
 			if p[x][y] == p[x+1][y] && p[x+1][y] == p[x+2][y] {
-				remove[Coords{x, y}] = struct{}{}
-				remove[Coords{x + 1, y}] = struct{}{}
-				remove[Coords{x + 2, y}] = struct{}{}
+				remove[coords{x, y}] = struct{}{}
+				remove[coords{x + 1, y}] = struct{}{}
+				remove[coords{x + 2, y}] = struct{}{}
 			}
 		}
 	}
 }
 
-func (p Pit) checkVerticalLines(remove map[Coords]struct{}) {
+func (p Pit) checkVerticalLines(remove map[coords]struct{}) {
 	for x := 0; x < p.width(); x++ {
 		for y := p.height() - 1; y > 1; y-- {
 			if p[x][y] == Empty || p[x][y] == Remove {
 				break
 			}
 			if p[x][y] == p[x][y-1] && p[x][y-1] == p[x][y-2] {
-				remove[Coords{x, y}] = struct{}{}
-				remove[Coords{x, y - 1}] = struct{}{}
-				remove[Coords{x, y - 2}] = struct{}{}
+				remove[coords{x, y}] = struct{}{}
+				remove[coords{x, y - 1}] = struct{}{}
+				remove[coords{x, y - 2}] = struct{}{}
 			}
 		}
 	}
 }
 
-func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
+func (p Pit) checkDiagonalLines(remove map[coords]struct{}) {
 	for y := p.height() - 1; y > 1; y-- {
 		// Checks for tiles to be removed in diagonal / lines
 		for x := 0; x < p.width()-2 && y > 1; x++ {
@@ -78,9 +78,9 @@ func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 				continue
 			}
 			if p[x][y] == p[x+1][y-1] && p[x+1][y-1] == p[x+2][y-2] {
-				remove[Coords{x, y}] = struct{}{}
-				remove[Coords{x + 1, y - 1}] = struct{}{}
-				remove[Coords{x + 2, y - 2}] = struct{}{}
+				remove[coords{x, y}] = struct{}{}
+				remove[coords{x + 1, y - 1}] = struct{}{}
+				remove[coords{x + 2, y - 2}] = struct{}{}
 			}
 		}
 		// Checks for tiles to be removed in diagonal \ lines
@@ -89,9 +89,9 @@ func (p Pit) checkDiagonalLines(remove map[Coords]struct{}) {
 				continue
 			}
 			if p[x][y] == p[x-1][y-1] && p[x-1][y-1] == p[x-2][y-2] {
-				remove[Coords{x, y}] = struct{}{}
-				remove[Coords{x - 1, y - 1}] = struct{}{}
-				remove[Coords{x - 2, y - 2}] = struct{}{}
+				remove[coords{x, y}] = struct{}{}
+				remove[coords{x - 1, y - 1}] = struct{}{}
+				remove[coords{x - 2, y - 2}] = struct{}{}
 			}
 		}
 	}

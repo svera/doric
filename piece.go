@@ -11,7 +11,7 @@ type Randomizer interface {
 // Piece represents a piece to fall in the pit
 type Piece struct {
 	Tiles [3]int
-	Coords
+	coords
 }
 
 func newPiece(r Randomizer) *Piece {
