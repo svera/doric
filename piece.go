@@ -14,7 +14,7 @@ type Piece struct {
 	// Tiles composing the piece. Tile at index 0 corresponds to upper one,
 	// while tile at index 2 refers to the bottom one.
 	Tiles [3]int
-	// Position of the piece in the pit, using bottom tile as reference.
+	// Position of the piece in the pit, using its bottom tile as reference.
 	X, Y int
 }
 
