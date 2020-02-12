@@ -16,7 +16,7 @@ const (
 	CommandRotate
 	// Pause / unpause game (for player use)
 	CommandPauseSwitch
-	// Pause / unpase game (intended for internal use, e. g. stop game logic while play animation)
+	// Pause / unpause game (intended for internal use, e. g. stop game logic while play animation)
 	CommandWaitSwitch
 	// Quit game
 	CommandQuit
