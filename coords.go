@@ -1,7 +1,7 @@
-package columns
+package doric
 
 // Coords represent the coordinates of a tile or cell in the pit
 type Coords struct {
-	x int
-	y int
+	X int
+	Y int
 }
