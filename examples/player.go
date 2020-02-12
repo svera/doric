@@ -82,7 +82,7 @@ func (p *Player) Tick(event tl.Event) {
 
 		switch event.Ch {
 		case 'p', 'P':
-			p.Command <- doric.CommandPause
+			p.Command <- doric.CommandPauseSwitch
 			p.paused = !p.paused
 		}
 	}

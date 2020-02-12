@@ -15,9 +15,9 @@ const (
 	// Rotate tiles in current piece
 	CommandRotate
 	// Pause / unpause game (for player use)
-	CommandPause
+	CommandPauseSwitch
 	// Pause / unpase game (intended for internal use, e. g. stop game logic while play animation)
-	CommandWait
+	CommandWaitSwitch
 	// Quit game
 	CommandQuit
 )
@@ -65,11 +65,11 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 		for {
 			select {
 			case comm := <-commands:
-				if comm == CommandWait {
+				if comm == CommandWaitSwitch {
 					wait = !wait
 					continue
 				}
-				if comm == CommandPause {
+				if comm == CommandPauseSwitch {
 					paused = !paused
 					continue
 				}

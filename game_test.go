@@ -72,7 +72,7 @@ func TestPause(t *testing.T) {
 	// the actual test will happen after that
 	<-events
 
-	command <- doric.CommandPause
+	command <- doric.CommandPauseSwitch
 
 	command <- doric.CommandLeft
 
@@ -144,7 +144,7 @@ func TestWait(t *testing.T) {
 	// the actual test will happen after that
 	<-events
 
-	command <- doric.CommandWait
+	command <- doric.CommandWaitSwitch
 
 	command <- doric.CommandLeft
 
@@ -202,7 +202,7 @@ func TestWait(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	command <- doric.CommandWait
+	command <- doric.CommandWaitSwitch
 
 	command <- doric.CommandLeft
 
