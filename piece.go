@@ -18,14 +18,6 @@ type Piece struct {
 	X, Y int
 }
 
-func newPiece(r Randomizer) *Piece {
-	p := &Piece{
-		Tiles: [3]int{},
-	}
-	p.randomize(r)
-	return p
-}
-
 // randomize assigns the piece three new tiles
 func (p *Piece) randomize(r Randomizer) {
 	p.Tiles[0] = r.Intn(maxTile) + 1

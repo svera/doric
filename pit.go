@@ -136,12 +136,20 @@ func (p Pit) settle() {
 	}
 }
 
-// consolidate put the values of the passed piece in the pit
-func (p Pit) consolidate(pc *Piece) {
+// lock put the values of the passed piece in the pit
+func (p Pit) lock(pc *Piece) {
 	for i, tile := range pc.Tiles {
 		if pc.Y-i < 0 {
 			return
 		}
 		p[pc.X][pc.Y-i] = tile
 	}
+}
+
+func (p Pit) copy() Pit {
+	pit := NewPit(p.height(), p.width())
+	for i := range p {
+		copy(pit[i], p[i])
+	}
+	return pit
 }
