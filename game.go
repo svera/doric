@@ -59,6 +59,7 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 	go func() {
 		defer func() {
 			close(events)
+			ticker.Stop()
 		}()
 
 		sendEventRenewed(events, pit, current, next)
@@ -124,7 +125,6 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 				sendEventRenewed(events, pit, current, next)
 
 				if pit[pit.width()/2][0] != Empty {
-					ticker.Stop()
 					return
 				}
 			}
