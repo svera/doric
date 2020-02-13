@@ -14,12 +14,12 @@ func Example() {
 		Frequency:               200 * time.Millisecond,
 	}
 	command := make(chan int)
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	source := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(source)
 
 	// Start the game and return game events in the events channel
-	events := doric.Play(pit, rnd, cfg, command)
+	events := doric.Play(well, rnd, cfg, command)
 
 	defer func() {
 		close(command)

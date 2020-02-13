@@ -35,7 +35,7 @@ type Config struct {
 }
 
 type game struct {
-	pit          Pit
+	well         Well
 	current      *Piece
 	next         *Piece
 	combo        int
@@ -50,13 +50,13 @@ type game struct {
 	ticker       *time.Ticker
 }
 
-// Play starts the game loop in a separate thread, making pieces fall to the bottom of the pit at gradually quicker speeds
+// Play starts the game loop in a separate thread, making pieces fall to the bottom of the well at gradually quicker speeds
 // as level increases.
 // Game can be controlled sending command codes to the commands channel. Game updates are communicated as events in the returned
 // channel.
-// Game ends when no more new pieces can enter the pit, and this will be signaled with the closing of the
+// Game ends when no more new pieces can enter the well, and this will be signaled with the closing of the
 // events channel.
-func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interface{} {
+func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan interface{} {
 	game := newGame(p, rand, cfg)
 
 	go func() {
@@ -82,17 +82,17 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 					continue
 				}
 				game.ticks = 0
-				if game.current.down(game.pit) {
+				if game.current.down(game.well) {
 					game.events <- EventUpdated{
 						Current: *game.current,
 					}
 					continue
 				}
-				game.pit.lock(game.current)
+				game.well.lock(game.current)
 				game.removeLines()
 				game.renewPieces(rand)
 
-				if game.pit[game.pit.width()/2][0] != Empty {
+				if game.well[game.well.width()/2][0] != Empty {
 					return
 				}
 			}
@@ -102,9 +102,9 @@ func Play(p Pit, rand Randomizer, cfg Config, commands <-chan int) <-chan interf
 	return game.events
 }
 
-func newGame(p Pit, rand Randomizer, cfg Config) *game {
+func newGame(p Well, rand Randomizer, cfg Config) *game {
 	game := &game{
-		pit:      p.copy(),
+		well:     p.copy(),
 		current:  &Piece{Tiles: [3]int{}},
 		next:     &Piece{Tiles: [3]int{}},
 		combo:    1,
@@ -130,11 +130,11 @@ func (g *game) execute(comm int) {
 	if !g.paused && !g.wait {
 		switch comm {
 		case CommandLeft:
-			g.current.left(g.pit)
+			g.current.left(g.well)
 		case CommandRight:
-			g.current.right(g.pit)
+			g.current.right(g.well)
 		case CommandDown:
-			g.current.down(g.pit)
+			g.current.down(g.well)
 			g.ticks = 0
 		case CommandRotate:
 			g.current.rotate()
@@ -146,7 +146,7 @@ func (g *game) execute(comm int) {
 }
 
 func (g *game) removeLines() {
-	removed := g.pit.markTilesToRemove()
+	removed := g.well.markTilesToRemove()
 	for removed > 0 {
 		g.totalRemoved += removed
 		if g.slowdown > 1 {
@@ -156,24 +156,24 @@ func (g *game) removeLines() {
 			g.level++
 		}
 		g.events <- EventScored{
-			Pit:     g.pit.copy(),
+			Well:    g.well.copy(),
 			Combo:   g.combo,
 			Level:   g.level,
 			Removed: removed,
 		}
 		g.combo++
-		g.pit.settle()
-		removed = g.pit.markTilesToRemove()
+		g.well.settle()
+		removed = g.well.markTilesToRemove()
 	}
 }
 
 func (g *game) renewPieces(rand Randomizer) {
-	g.current.copy(g.next, g.pit.width()/2)
+	g.current.copy(g.next, g.well.width()/2)
 	g.next.randomize(rand)
 	g.combo = 1
 
 	g.events <- EventRenewed{
-		Pit:     g.pit.copy(),
+		Well:    g.well.copy(),
 		Current: *g.current,
 		Next:    *g.next,
 	}

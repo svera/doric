@@ -1,30 +1,30 @@
 package doric
 
-// Values that represent empty or removable tiles in the pit
+// Values that represent empty or removable tiles in the well
 const (
 	Remove = -1
 	Empty  = 0
 )
 
-// Standard Pit dimensions (in tiles) as per commercial SEGA versions
+// Standard Well dimensions (in tiles) as per commercial SEGA versions
 const (
 	StandardWidth  = 6
 	StandardHeight = 13
 )
 
-// coords represent the coordinates of a tile or cell in the pit
+// coords represent the coordinates of a tile or cell in the well
 type coords struct {
 	x int
 	y int
 }
 
-// Pit is a slice of slices which represents the field of play, holding the tiles that are falling.
+// Well is a slice of slices which represents the field of play, holding the tiles that are falling.
 // First index represents tiles in the X (horizontal) axis, second index refers to the Y (vertical) axis.
-type Pit [][]int
+type Well [][]int
 
-// NewPit return a new empty Pit instance
-func NewPit(rows, cols int) Pit {
-	var p Pit
+// NewWell return a new empty Well instance
+func NewWell(rows, cols int) Well {
+	var p Well
 	p = make([][]int, cols)
 	for i := range p {
 		p[i] = make([]int, rows)
@@ -32,9 +32,9 @@ func NewPit(rows, cols int) Pit {
 	return p
 }
 
-// markTilesToRemove scans pit lines looking for tiles to be removed, amd mark those tiles.
+// markTilesToRemove scans well lines looking for tiles to be removed, amd mark those tiles.
 // Tiles repeated in 3 or more consecutive positions horizontally, vertically or diagonally are to be removed.
-func (p Pit) markTilesToRemove() int {
+func (p Well) markTilesToRemove() int {
 	remove := map[coords]struct{}{}
 	p.checkHorizontalLines(remove)
 	p.checkVerticalLines(remove)
@@ -46,7 +46,7 @@ func (p Pit) markTilesToRemove() int {
 	return len(remove)
 }
 
-func (p Pit) checkHorizontalLines(remove map[coords]struct{}) {
+func (p Well) checkHorizontalLines(remove map[coords]struct{}) {
 	for y := p.height() - 1; y >= 0; y-- {
 		for x := 0; x < p.width()-2; x++ {
 			if p[x][y] == Empty || p[x][y] == Remove {
@@ -61,7 +61,7 @@ func (p Pit) checkHorizontalLines(remove map[coords]struct{}) {
 	}
 }
 
-func (p Pit) checkVerticalLines(remove map[coords]struct{}) {
+func (p Well) checkVerticalLines(remove map[coords]struct{}) {
 	for x := 0; x < p.width(); x++ {
 		for y := p.height() - 1; y > 1; y-- {
 			if p[x][y] == Empty || p[x][y] == Remove {
@@ -76,7 +76,7 @@ func (p Pit) checkVerticalLines(remove map[coords]struct{}) {
 	}
 }
 
-func (p Pit) checkDiagonalLines(remove map[coords]struct{}) {
+func (p Well) checkDiagonalLines(remove map[coords]struct{}) {
 	for y := p.height() - 1; y > 1; y-- {
 		// Checks for tiles to be removed in diagonal / lines
 		for x := 0; x < p.width()-2 && y > 1; x++ {
@@ -103,18 +103,18 @@ func (p Pit) checkDiagonalLines(remove map[coords]struct{}) {
 	}
 }
 
-// Width returns pit's width
-func (p Pit) width() int {
+// Width returns well's width
+func (p Well) width() int {
 	return len(p)
 }
 
-// Height returns pit's height
-func (p Pit) height() int {
+// Height returns well's height
+func (p Well) height() int {
 	return len(p[0])
 }
 
 // settle moves down all tiles which have empty cells below
-func (p Pit) settle() {
+func (p Well) settle() {
 	for x := 0; x < p.width(); x++ {
 		moveDown := 0
 		for y := p.height() - 1; y >= 0; y-- {
@@ -136,8 +136,8 @@ func (p Pit) settle() {
 	}
 }
 
-// lock put the values of the passed piece in the pit
-func (p Pit) lock(pc *Piece) {
+// lock put the values of the passed piece in the well
+func (p Well) lock(pc *Piece) {
 	for i, tile := range pc.Tiles {
 		if pc.Y-i < 0 {
 			return
@@ -146,10 +146,10 @@ func (p Pit) lock(pc *Piece) {
 	}
 }
 
-func (p Pit) copy() Pit {
-	pit := NewPit(p.height(), p.width())
+func (p Well) copy() Well {
+	well := NewWell(p.height(), p.width())
 	for i := range p {
-		copy(pit[i], p[i])
+		copy(well[i], p[i])
 	}
-	return pit
+	return well
 }

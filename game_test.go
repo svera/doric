@@ -35,11 +35,11 @@ func getConfig() doric.Config {
 
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(1, doric.StandardWidth)
+	well := doric.NewWell(1, doric.StandardWidth)
 	r := &mockRandomizer{Values: []int{0}}
 	command := make(chan int)
-	pit[3][0] = 1
-	events := doric.Play(pit, r, getConfig(), command)
+	well[3][0] = 1
+	events := doric.Play(well, r, getConfig(), command)
 
 	for {
 		select {
@@ -55,10 +55,10 @@ func TestGameOver(t *testing.T) {
 
 func TestQuit(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	r := &mockRandomizer{Values: []int{0}}
 	command := make(chan int)
-	events := doric.Play(pit, r, getConfig(), command)
+	events := doric.Play(well, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -80,10 +80,10 @@ func TestQuit(t *testing.T) {
 
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
-	events := doric.Play(pit, r, getConfig(), command)
+	events := doric.Play(well, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -150,12 +150,12 @@ func TestPause(t *testing.T) {
 
 func TestWait(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	cfg := getConfig()
 	cfg.Frequency = 10 * time.Second
-	events := doric.Play(pit, r, cfg, command)
+	events := doric.Play(well, r, cfg, command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -238,10 +238,10 @@ func TestWait(t *testing.T) {
 
 func TestCommands(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
-	events := doric.Play(pit, r, getConfig(), command)
+	events := doric.Play(well, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -306,12 +306,12 @@ func TestCommands(t *testing.T) {
 
 }
 
-func TestPitBounds(t *testing.T) {
+func TestWellBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
-	pit := doric.NewPit(1, 1)
+	well := doric.NewWell(1, 1)
 	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
-	events := doric.Play(pit, r, getConfig(), command)
+	events := doric.Play(well, r, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -364,10 +364,10 @@ func TestScored(t *testing.T) {
 	scoredTests := []struct {
 		name                    string
 		numberTilesForNextLevel int
-		pit                     doric.Pit
+		well                    doric.Well
 		rand                    *mockRandomizer
-		expectedPit             doric.Pit
-		expectedRenewedPit      doric.Pit
+		expectedWell            doric.Well
+		expectedRenewedWell     doric.Well
 		expectedRemoved         int
 		expectedLevel           int
 		expectedCurrent         [3]int
@@ -376,17 +376,17 @@ func TestScored(t *testing.T) {
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
 			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: transpose(doric.Pit{
+			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
 				[]int{1, 1, 1, 0, 1, 1},
 			}),
-			expectedPit: transpose(doric.Pit{
+			expectedWell: transpose(doric.Well{
 				[]int{0, -1, 0, -1, 0, 0},
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
 			}),
-			expectedRenewedPit: transpose(doric.Pit{
+			expectedRenewedWell: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{1, 0, 0, 0, 0, 0},
@@ -399,17 +399,17 @@ func TestScored(t *testing.T) {
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
 			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: transpose(doric.Pit{
+			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
 				[]int{1, 1, 1, 0, 1, 1},
 			}),
-			expectedPit: transpose(doric.Pit{
+			expectedWell: transpose(doric.Well{
 				[]int{0, -1, 0, -1, 0, 0},
 				[]int{1, -1, 0, -1, -1, -1},
 				[]int{-1, -1, -1, -1, -1, -1},
 			}),
-			expectedRenewedPit: transpose(doric.Pit{
+			expectedRenewedWell: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{1, 0, 0, 0, 0, 0},
@@ -422,17 +422,17 @@ func TestScored(t *testing.T) {
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
 			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
-			pit: transpose(doric.Pit{
+			well: transpose(doric.Well{
 				[]int{1, 0, 0, 0, 0, 1},
 				[]int{2, 1, 0, 0, 1, 2},
 				[]int{3, 2, 1, 0, 2, 3},
 			}),
-			expectedPit: transpose(doric.Pit{
+			expectedWell: transpose(doric.Well{
 				[]int{-1, 0, 0, -1, 0, -1},
 				[]int{2, -1, 0, -1, -1, 2},
 				[]int{3, 2, -1, -1, 2, 3},
 			}),
-			expectedRenewedPit: transpose(doric.Pit{
+			expectedRenewedWell: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{2, 0, 0, 0, 0, 2},
 				[]int{3, 2, 0, 0, 2, 3},
@@ -450,7 +450,7 @@ func TestScored(t *testing.T) {
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
-			events := doric.Play(tt.pit, tt.rand, cfg, command)
+			events := doric.Play(tt.well, tt.rand, cfg, command)
 
 			<-events
 
@@ -465,8 +465,8 @@ func TestScored(t *testing.T) {
 						if asserted.Level != tt.expectedLevel {
 							t.Errorf("Expected level %d but got %d", tt.expectedLevel, asserted.Level)
 						}
-						if !reflect.DeepEqual(tt.expectedPit, asserted.Pit) {
-							t.Errorf("Expected pit %v but got %v", tt.expectedPit, asserted.Pit)
+						if !reflect.DeepEqual(tt.expectedWell, asserted.Well) {
+							t.Errorf("Expected well %v but got %v", tt.expectedWell, asserted.Well)
 						}
 					case doric.EventRenewed:
 						if asserted.Current.Tiles != tt.expectedCurrent {
@@ -476,8 +476,8 @@ func TestScored(t *testing.T) {
 								asserted.Current.Tiles,
 							)
 						}
-						if !reflect.DeepEqual(tt.expectedRenewedPit, asserted.Pit) {
-							t.Errorf("Expected pit %v but got %v", tt.expectedRenewedPit, asserted.Pit)
+						if !reflect.DeepEqual(tt.expectedRenewedWell, asserted.Well) {
+							t.Errorf("Expected well %v but got %v", tt.expectedRenewedWell, asserted.Well)
 						}
 						return
 					}
@@ -494,26 +494,26 @@ func TestScoredCombo(t *testing.T) {
 	comboTests := []struct {
 		name                    string
 		numberTilesForNextLevel int
-		pit                     doric.Pit
+		well                    doric.Well
 		rand                    *mockRandomizer
-		expectedPits            []doric.Pit
+		expectedWells           []doric.Well
 	}{
 		{
 			name:                    "Scored with combo",
 			numberTilesForNextLevel: 20,
 			rand:                    &mockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
-			pit: transpose(doric.Pit{
+			well: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 2, 2, 0, 1, 1},
 			}),
-			expectedPits: []doric.Pit{
-				transpose(doric.Pit{
+			expectedWells: []doric.Well{
+				transpose(doric.Well{
 					[]int{0, 0, 0, 3, 0, 0},
 					[]int{0, 0, 0, 2, 0, 0},
 					[]int{0, 2, 2, -1, -1, -1},
 				}),
-				transpose(doric.Pit{
+				transpose(doric.Well{
 					[]int{0, 0, 0, 0, 0, 0},
 					[]int{0, 0, 0, 3, 0, 0},
 					[]int{0, -1, -1, -1, 0, 0},
@@ -529,7 +529,7 @@ func TestScoredCombo(t *testing.T) {
 			cfg.InitialSlowdown = 2
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
-			events := doric.Play(tt.pit, tt.rand, cfg, command)
+			events := doric.Play(tt.well, tt.rand, cfg, command)
 
 			<-events
 
@@ -542,10 +542,10 @@ func TestScoredCombo(t *testing.T) {
 						if asserted.Combo != count+1 {
 							t.Errorf("Expected combo value %d but got %d", count, asserted.Combo)
 						}
-						if !reflect.DeepEqual(tt.expectedPits[count], asserted.Pit) {
-							t.Errorf("Expected pit %v but got %v", tt.expectedPits[count], asserted.Pit)
+						if !reflect.DeepEqual(tt.expectedWells[count], asserted.Well) {
+							t.Errorf("Expected well %v but got %v", tt.expectedWells[count], asserted.Well)
 						}
-						if count == len(tt.expectedPits)-1 {
+						if count == len(tt.expectedWells)-1 {
 							return
 						}
 						count++
@@ -559,14 +559,14 @@ func TestScoredCombo(t *testing.T) {
 	}
 }
 
-// transpose swaps values between columns and rows in a pit,
+// transpose swaps values between columns and rows in a well,
 // as visually is more natural to put all X values per row in a single line
 // (as they appear on actual games)
-// and this can only be done by putting those in the Y index of the pit type.
-func transpose(slice doric.Pit) doric.Pit {
+// and this can only be done by putting those in the Y index of the well type.
+func transpose(slice doric.Well) doric.Well {
 	xl := len(slice[0])
 	yl := len(slice)
-	result := doric.NewPit(yl, xl)
+	result := doric.NewWell(yl, xl)
 	for i := 0; i < xl; i++ {
 		for j := 0; j < yl; j++ {
 			result[i][j] = slice[j][i]

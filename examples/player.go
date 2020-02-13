@@ -7,7 +7,7 @@ import (
 	"github.com/svera/doric"
 )
 
-// Player handles game's commands in the game, like moving the piece currently falling in the pit
+// Player handles game's commands in the game, like moving the piece currently falling in the well
 type Player struct {
 	*tl.Entity
 	Current  *doric.Piece

@@ -7,10 +7,10 @@ import (
 	"github.com/svera/doric"
 )
 
-// Pit represents a pit on screen implementing Termloop's Drawable interface
-type Pit struct {
+// Well represents a well on screen implementing Termloop's Drawable interface
+type Well struct {
 	*tl.Entity
-	Pit     doric.Pit
+	Well    doric.Well
 	width   int
 	height  int
 	offsetX int
@@ -18,11 +18,11 @@ type Pit struct {
 	mux     sync.Locker
 }
 
-// NewPit returns a new pit instance
-func NewPit(p doric.Pit, offsetX, offsetY, height, width int, mux sync.Locker) *Pit {
-	return &Pit{
+// NewWell returns a new well instance
+func NewWell(p doric.Well, offsetX, offsetY, height, width int, mux sync.Locker) *Well {
+	return &Well{
 		Entity:  tl.NewEntity(offsetX, offsetY, width, height),
-		Pit:     p,
+		Well:    p,
 		width:   width,
 		height:  height,
 		offsetX: offsetX,
@@ -31,20 +31,20 @@ func NewPit(p doric.Pit, offsetX, offsetY, height, width int, mux sync.Locker) *
 	}
 }
 
-// Draw draws pit on screen
-func (p *Pit) Draw(screen *tl.Screen) {
+// Draw draws well on screen
+func (p *Well) Draw(screen *tl.Screen) {
 	var x, y int
 
 	for y = 0; y <= p.height; y++ {
 		for x = 0; x <= p.width; x++ {
-			// Pit left border
+			// Well left border
 			if x == 0 {
 				screen.RenderCell(p.offsetX, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
 			}
-			// Pit right border
+			// Well right border
 			if x == p.width {
 				screen.RenderCell(p.offsetX+p.width*2+1, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
@@ -52,7 +52,7 @@ func (p *Pit) Draw(screen *tl.Screen) {
 				})
 				continue
 			}
-			// Pit bottom
+			// Well bottom
 			if y == p.height {
 				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
 					Bg: tl.ColorWhite,
@@ -66,7 +66,7 @@ func (p *Pit) Draw(screen *tl.Screen) {
 			}
 			// Tiles
 			p.mux.Lock()
-			if p.Pit[x][y] >= doric.Empty {
+			if p.Well[x][y] >= doric.Empty {
 				p.renderTile(screen, x, y)
 			}
 			p.mux.Unlock()
@@ -74,19 +74,19 @@ func (p *Pit) Draw(screen *tl.Screen) {
 	}
 }
 
-func (p *Pit) renderTile(screen *tl.Screen, x, y int) {
+func (p *Well) renderTile(screen *tl.Screen, x, y int) {
 	leftCh, rightCh := '[', ']'
 
-	if p.Pit[x][y] == doric.Empty {
+	if p.Well[x][y] == doric.Empty {
 		leftCh, rightCh = ' ', ' '
 	}
 	screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit[x][y]],
+		Bg: colors[p.Well[x][y]],
 		Fg: tl.ColorBlack,
 		Ch: leftCh,
 	})
 	screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y, &tl.Cell{
-		Bg: colors[p.Pit[x][y]],
+		Bg: colors[p.Well[x][y]],
 		Fg: tl.ColorBlack,
 		Ch: rightCh,
 	})

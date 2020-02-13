@@ -5,10 +5,10 @@ type EventUpdated struct {
 	Current Piece
 }
 
-// EventScored is sent when the three or more tiles of the same color are aligned in the pit,
+// EventScored is sent when the three or more tiles of the same color are aligned in the well,
 // thus scoring points for the player
 type EventScored struct {
-	Pit     Pit
+	Well    Well
 	Combo   int
 	Removed int
 	Level   int
@@ -16,7 +16,7 @@ type EventScored struct {
 
 // EventRenewed is sent when the current and next pieces are renewed
 type EventRenewed struct {
-	Pit     Pit
+	Well    Well
 	Current Piece
 	Next    Piece
 }

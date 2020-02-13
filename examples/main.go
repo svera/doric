@@ -37,7 +37,7 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities []tl.Drawable) {
 }
 
 func startGameLogic(commands chan int) []tl.Drawable {
-	pit := doric.NewPit(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSlowdown:         10,
@@ -46,7 +46,7 @@ func startGameLogic(commands chan int) []tl.Drawable {
 
 	source := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(source)
-	events := doric.Play(pit, r, cfg, commands)
+	events := doric.Play(well, r, cfg, commands)
 
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Current
@@ -54,7 +54,7 @@ func startGameLogic(commands chan int) []tl.Drawable {
 
 	mux := &sync.Mutex{}
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
-	pitEntity := NewPit(pit, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth, mux)
+	wellEntity := NewWell(well, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth, mux)
 	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY, mux)
 	nextPieceEntity := NewNext(&nxt, offsetX+15, offsetY+5, mux)
 	score := tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
@@ -80,7 +80,7 @@ func startGameLogic(commands chan int) []tl.Drawable {
 				mux.Unlock()
 			case doric.EventRenewed:
 				mux.Lock()
-				pitEntity.Pit = t.Pit
+				wellEntity.Well = t.Well
 				playerEntity.Current = &t.Current
 				nextPieceEntity.Piece = &t.Next
 				mux.Unlock()
@@ -88,5 +88,5 @@ func startGameLogic(commands chan int) []tl.Drawable {
 		}
 	}()
 
-	return []tl.Drawable{pitEntity, playerEntity, nextPieceEntity, message, score, level}
+	return []tl.Drawable{wellEntity, playerEntity, nextPieceEntity, message, score, level}
 }
