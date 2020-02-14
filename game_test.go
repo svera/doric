@@ -14,8 +14,8 @@ type mockTilesFactory struct {
 	current  int
 }
 
-// Intn return numbers set in the Values property in the same order
-// If all numbers inside Values were returned, the slice is ran again from the beginning
+// build returns a tileset in the Tilesets property in the same order
+// If all tilesets inside Tilesets were returned, the slice is ran again from the beginning
 func (m *mockTilesFactory) build(n int) [3]int {
 	if m.current == len(m.Tilesets) {
 		m.current = 0
@@ -37,14 +37,14 @@ func getConfig() doric.Config {
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(1, doric.StandardWidth)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 1, 1},
 		},
 	}
 	command := make(chan int)
 	well[3][0] = 1
-	events := doric.Play(well, r.build, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	for {
 		select {
@@ -61,13 +61,13 @@ func TestGameOver(t *testing.T) {
 func TestQuit(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 1, 1},
 		},
 	}
 	command := make(chan int)
-	events := doric.Play(well, r.build, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -90,13 +90,13 @@ func TestQuit(t *testing.T) {
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 2, 3},
 		},
 	}
 	command := make(chan int)
-	events := doric.Play(well, r.build, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -164,7 +164,7 @@ func TestPause(t *testing.T) {
 func TestWait(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 2, 3},
 		},
@@ -172,7 +172,7 @@ func TestWait(t *testing.T) {
 	command := make(chan int)
 	cfg := getConfig()
 	cfg.InitialSpeed = 0.5
-	events := doric.Play(well, r.build, cfg, command)
+	events := doric.Play(well, factory.build, cfg, command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -256,13 +256,13 @@ func TestWait(t *testing.T) {
 func TestCommands(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 2, 3},
 		},
 	}
 	command := make(chan int)
-	events := doric.Play(well, r.build, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -330,13 +330,13 @@ func TestCommands(t *testing.T) {
 func TestWellBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(1, 1)
-	r := &mockTilesFactory{
+	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
 			[3]int{1, 2, 3},
 		},
 	}
 	command := make(chan int)
-	events := doric.Play(well, r.build, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
