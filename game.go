@@ -48,6 +48,7 @@ type game struct {
 	speed        float64
 	maxFrequency time.Duration
 	ticker       *time.Ticker
+	factory      TilesFactory
 }
 
 // Play starts the game loop in a separate thread, making pieces fall to the bottom of the well at gradually quicker speeds
@@ -56,8 +57,8 @@ type game struct {
 // channel.
 // Game ends when no more new pieces can enter the well, and this will be signaled with the closing of the
 // events channel.
-func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan interface{} {
-	game := newGame(p, rand, cfg)
+func Play(p Well, factory TilesFactory, cfg Config, commands <-chan int) <-chan interface{} {
+	game := newGame(p, factory, cfg)
 
 	go func() {
 		defer func() {
@@ -65,7 +66,7 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 			game.ticker.Stop()
 		}()
 
-		game.renewPieces(rand)
+		game.renewPieces()
 		for {
 			select {
 			case comm := <-commands:
@@ -85,7 +86,7 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 				}
 				game.well.lock(game.current)
 				game.removeLines()
-				game.renewPieces(rand)
+				game.renewPieces()
 
 				if game.isOver() {
 					return
@@ -97,7 +98,7 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 	return game.events
 }
 
-func newGame(p Well, rand Randomizer, cfg Config) *game {
+func newGame(p Well, factory TilesFactory, cfg Config) *game {
 	game := &game{
 		well:         p.copy(),
 		current:      &Piece{Tiles: [3]int{}},
@@ -109,8 +110,10 @@ func newGame(p Well, rand Randomizer, cfg Config) *game {
 		speed:        cfg.InitialSpeed,
 		maxFrequency: time.Duration(1000/cfg.MaxSpeed) * time.Millisecond,
 		ticker:       time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
+		factory:      factory,
 	}
-	game.next.randomize(rand)
+	game.next.Tiles = factory(maxTile)
+
 	return game
 }
 
@@ -174,9 +177,9 @@ func (g *game) isOver() bool {
 	return g.well[g.well.width()/2][0] != Empty
 }
 
-func (g *game) renewPieces(rand Randomizer) {
+func (g *game) renewPieces() {
 	g.current.copy(g.next, g.well.width()/2)
-	g.next.randomize(rand)
+	g.next.Tiles = g.factory(maxTile)
 	g.combo = 1
 
 	g.events <- EventRenewed{

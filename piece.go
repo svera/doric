@@ -3,11 +3,8 @@ package doric
 // maxTile is the maximum tile value a piece can contain
 const maxTile = 6
 
-// Randomizer defines a required method to get random integer values.
-// Each value will map to one of the n possible tile types, where n = 6 by default.
-type Randomizer interface {
-	Intn(n int) int
-}
+// TilesFactory defines the signature of the method to build a piece tileset.
+type TilesFactory func(int) [3]int
 
 // Piece represents a piece to fall in the well
 type Piece struct {
@@ -16,13 +13,6 @@ type Piece struct {
 	Tiles [3]int
 	// Position of the piece in the well, using its bottom tile as reference.
 	X, Y int
-}
-
-// randomize assigns the piece three new tiles
-func (p *Piece) randomize(r Randomizer) {
-	p.Tiles[0] = r.Intn(maxTile) + 1
-	p.Tiles[1] = r.Intn(maxTile) + 1
-	p.Tiles[2] = r.Intn(maxTile) + 1
 }
 
 // left moves the piece to the left in the well if that position is empty
