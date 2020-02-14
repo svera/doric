@@ -40,8 +40,9 @@ func startGameLogic(commands chan int) []tl.Drawable {
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
-		InitialSlowdown:         10,
-		Frequency:               200 * time.Millisecond,
+		InitialSpeed:            0.5,
+		SpeedIncrement:          0.25,
+		MaxSpeed:                13,
 	}
 
 	source := rand.NewSource(time.Now().UnixNano())

@@ -28,8 +28,9 @@ func (m *mockRandomizer) Intn(n int) int {
 func getConfig() doric.Config {
 	return doric.Config{
 		NumberTilesForNextLevel: 10,
-		InitialSlowdown:         1,
-		Frequency:               1 * time.Millisecond,
+		InitialSpeed:            5,
+		SpeedIncrement:          1,
+		MaxSpeed:                13,
 	}
 }
 
@@ -154,7 +155,7 @@ func TestWait(t *testing.T) {
 	r := &mockRandomizer{Values: []int{0, 1, 2}}
 	command := make(chan int)
 	cfg := getConfig()
-	cfg.Frequency = 10 * time.Second
+	cfg.InitialSpeed = 0.5
 	events := doric.Play(well, r, cfg, command)
 
 	// First event received is just before game logic loop begins
@@ -447,7 +448,7 @@ func TestScored(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			cfg := getConfig()
-			cfg.InitialSlowdown = 2
+			cfg.InitialSpeed = 20
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
 			events := doric.Play(tt.well, tt.rand, cfg, command)
@@ -526,7 +527,7 @@ func TestScoredCombo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			cfg := getConfig()
-			cfg.InitialSlowdown = 2
+			cfg.InitialSpeed = 20
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
 			events := doric.Play(tt.well, tt.rand, cfg, command)
