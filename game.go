@@ -26,12 +26,12 @@ const (
 type Config struct {
 	// How many tiles a player has to destroy to advance to the next level
 	NumberTilesForNextLevel int
-	// If the game loop running frequency is every 200ms, an initialSlowdown of 8 means that pieces fall
-	// at a speed of 10*200 = 0.5 cells/sec
-	// For an updating frequency of 200ms, the maximum falling speed would be 5 cells/sec (a cell every 200ms)
-	InitialSlowdown int
-	// Frequency to check for tiles to remove, piece changing, etc.
-	Frequency time.Duration
+	// InitialSpeed is the falling speed at the beginning of the game in cells/second
+	InitialSpeed float64
+	// SpeedIncrement is how much the speed increases each level in cells/second
+	SpeedIncrement float64
+	// MaxSpeed is the maximum speed falling pieces can reach
+	MaxSpeed float64
 }
 
 type game struct {
@@ -39,14 +39,14 @@ type game struct {
 	current      *Piece
 	next         *Piece
 	combo        int
-	slowdown     int
 	level        int
 	paused       bool
 	wait         bool
-	ticks        int
 	totalRemoved int
 	cfg          Config
 	events       chan interface{}
+	speed        float64
+	maxFrequency time.Duration
 	ticker       *time.Ticker
 }
 
@@ -77,11 +77,6 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 				if game.paused || game.wait {
 					continue
 				}
-				if game.ticks != game.slowdown {
-					game.ticks++
-					continue
-				}
-				game.ticks = 0
 				if game.current.down(game.well) {
 					game.events <- EventUpdated{
 						Current: *game.current,
@@ -92,7 +87,7 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 				game.removeLines()
 				game.renewPieces(rand)
 
-				if game.well[game.well.width()/2][0] != Empty {
+				if game.isOver() {
 					return
 				}
 			}
@@ -104,15 +99,16 @@ func Play(p Well, rand Randomizer, cfg Config, commands <-chan int) <-chan inter
 
 func newGame(p Well, rand Randomizer, cfg Config) *game {
 	game := &game{
-		well:     p.copy(),
-		current:  &Piece{Tiles: [3]int{}},
-		next:     &Piece{Tiles: [3]int{}},
-		combo:    1,
-		slowdown: cfg.InitialSlowdown,
-		level:    1,
-		cfg:      cfg,
-		events:   make(chan interface{}),
-		ticker:   time.NewTicker(cfg.Frequency),
+		well:         p.copy(),
+		current:      &Piece{Tiles: [3]int{}},
+		next:         &Piece{Tiles: [3]int{}},
+		combo:        1,
+		level:        1,
+		cfg:          cfg,
+		events:       make(chan interface{}),
+		speed:        cfg.InitialSpeed,
+		maxFrequency: time.Duration(1000/cfg.MaxSpeed) * time.Millisecond,
+		ticker:       time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
 	}
 	game.next.randomize(rand)
 	return game
@@ -135,7 +131,6 @@ func (g *game) execute(comm int) {
 			g.current.right(g.well)
 		case CommandDown:
 			g.current.down(g.well)
-			g.ticks = 0
 		case CommandRotate:
 			g.current.rotate()
 		}
@@ -149,11 +144,9 @@ func (g *game) removeLines() {
 	removed := g.well.markTilesToRemove()
 	for removed > 0 {
 		g.totalRemoved += removed
-		if g.slowdown > 1 {
-			g.slowdown--
-		}
 		if g.totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
 			g.level++
+			g.speedUp()
 		}
 		g.events <- EventScored{
 			Well:    g.well.copy(),
@@ -165,6 +158,20 @@ func (g *game) removeLines() {
 		g.well.settle()
 		removed = g.well.markTilesToRemove()
 	}
+}
+
+func (g *game) speedUp() {
+	speed := g.speed + g.cfg.SpeedIncrement
+	freq := time.Duration(1000/speed) * time.Millisecond
+	if freq > g.maxFrequency {
+		g.ticker.Stop()
+		g.speed = speed
+		g.ticker = time.NewTicker(freq)
+	}
+}
+
+func (g *game) isOver() bool {
+	return g.well[g.well.width()/2][0] != Empty
 }
 
 func (g *game) renewPieces(rand Randomizer) {

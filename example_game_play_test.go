@@ -10,8 +10,9 @@ import (
 func Example() {
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
-		InitialSlowdown:         10,
-		Frequency:               200 * time.Millisecond,
+		InitialSpeed:            0.5,
+		SpeedIncrement:          0.25,
+		MaxSpeed:                13,
 	}
 	command := make(chan int)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
