@@ -39,7 +39,7 @@ func TestGameOver(t *testing.T) {
 	well := doric.NewWell(1, doric.StandardWidth)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 1, 1},
+			{1, 1, 1},
 		},
 	}
 	command := make(chan int)
@@ -63,7 +63,7 @@ func TestQuit(t *testing.T) {
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 1, 1},
+			{1, 1, 1},
 		},
 	}
 	command := make(chan int)
@@ -92,7 +92,7 @@ func TestPause(t *testing.T) {
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 2, 3},
+			{1, 2, 3},
 		},
 	}
 	command := make(chan int)
@@ -166,7 +166,7 @@ func TestWait(t *testing.T) {
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 2, 3},
+			{1, 2, 3},
 		},
 	}
 	command := make(chan int)
@@ -258,7 +258,7 @@ func TestCommands(t *testing.T) {
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 2, 3},
+			{1, 2, 3},
 		},
 	}
 	command := make(chan int)
@@ -332,7 +332,7 @@ func TestWellBounds(t *testing.T) {
 	well := doric.NewWell(1, 1)
 	factory := &mockTilesFactory{
 		Tilesets: [][3]int{
-			[3]int{1, 2, 3},
+			{1, 2, 3},
 		},
 	}
 	command := make(chan int)
@@ -402,8 +402,8 @@ func TestScored(t *testing.T) {
 			numberTilesForNextLevel: 20,
 			rand: &mockTilesFactory{
 				Tilesets: [][3]int{
-					[3]int{1, 1, 1},
-					[3]int{4, 5, 6},
+					{1, 1, 1},
+					{4, 5, 6},
 				},
 			},
 			well: transpose(doric.Well{
@@ -430,8 +430,8 @@ func TestScored(t *testing.T) {
 			numberTilesForNextLevel: 1,
 			rand: &mockTilesFactory{
 				Tilesets: [][3]int{
-					[3]int{1, 1, 1},
-					[3]int{4, 5, 6},
+					{1, 1, 1},
+					{4, 5, 6},
 				},
 			},
 			well: transpose(doric.Well{
@@ -458,8 +458,8 @@ func TestScored(t *testing.T) {
 			numberTilesForNextLevel: 20,
 			rand: &mockTilesFactory{
 				Tilesets: [][3]int{
-					[3]int{1, 1, 1},
-					[3]int{4, 5, 6},
+					{1, 1, 1},
+					{4, 5, 6},
 				},
 			},
 			well: transpose(doric.Well{
@@ -544,8 +544,8 @@ func TestScoredCombo(t *testing.T) {
 			numberTilesForNextLevel: 20,
 			rand: &mockTilesFactory{
 				Tilesets: [][3]int{
-					[3]int{1, 2, 3},
-					[3]int{4, 5, 6},
+					{1, 2, 3},
+					{4, 5, 6},
 				},
 			},
 			well: transpose(doric.Well{

@@ -43,10 +43,26 @@ func (p *Well) Draw(screen *tl.Screen) {
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
+				screen.RenderCell(p.offsetX, p.offsetY+y, &tl.Cell{
+					Bg: tl.ColorWhite,
+					Ch: ' ',
+				})
 			}
 			// Well right border
 			if x == p.width {
 				screen.RenderCell(p.offsetX+p.width*2+1, p.offsetY+y, &tl.Cell{
+					Bg: tl.ColorWhite,
+					Ch: ' ',
+				})
+				continue
+			}
+			// Well bottom
+			if y == 0 {
+				screen.RenderCell(p.offsetX+(x*2)+1, p.offsetY+y-1, &tl.Cell{
+					Bg: tl.ColorWhite,
+					Ch: ' ',
+				})
+				screen.RenderCell(p.offsetX+(x*2)+2, p.offsetY+y-1, &tl.Cell{
 					Bg: tl.ColorWhite,
 					Ch: ' ',
 				})
