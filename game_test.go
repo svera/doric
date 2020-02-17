@@ -112,7 +112,7 @@ func TestPause(t *testing.T) {
 			if et.Current.X == 3 {
 				break
 			}
-			t.Errorf("Current piece must not be moved left if game is paused")
+			t.Errorf("Current column must not be moved left if game is paused")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -126,7 +126,7 @@ func TestPause(t *testing.T) {
 			if et.Current.X == 3 {
 				break
 			}
-			t.Errorf("Current piece must not be moved right if game is paused")
+			t.Errorf("Current column must not be moved right if game is paused")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -140,7 +140,7 @@ func TestPause(t *testing.T) {
 			if et.Current.Y == 0 {
 				break
 			}
-			t.Errorf("Current piece must not be moved down if game is paused")
+			t.Errorf("Current column must not be moved down if game is paused")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -154,7 +154,7 @@ func TestPause(t *testing.T) {
 			if et.Current.Tiles == [3]int{1, 2, 3} {
 				break
 			}
-			t.Errorf("Current piece must not be rotated if game is paused")
+			t.Errorf("Current column must not be rotated if game is paused")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -188,7 +188,7 @@ func TestWait(t *testing.T) {
 			if et.Current.X == 3 {
 				break
 			}
-			t.Errorf("Current piece must not be moved left if game is waiting")
+			t.Errorf("Current column must not be moved left if game is waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -202,7 +202,7 @@ func TestWait(t *testing.T) {
 			if et.Current.X == 3 {
 				break
 			}
-			t.Errorf("Current piece must not be moved right if game is waiting")
+			t.Errorf("Current column must not be moved right if game is waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -216,7 +216,7 @@ func TestWait(t *testing.T) {
 			if et.Current.Y == 0 {
 				break
 			}
-			t.Errorf("Current piece must not be moved down if game is waiting")
+			t.Errorf("Current column must not be moved down if game is waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -230,7 +230,7 @@ func TestWait(t *testing.T) {
 			if et.Current.Tiles == [3]int{1, 2, 3} {
 				break
 			}
-			t.Errorf("Current piece must not be rotated if game is waiting")
+			t.Errorf("Current column must not be rotated if game is waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -246,7 +246,7 @@ func TestWait(t *testing.T) {
 			if et.Current.X == 2 {
 				break
 			}
-			t.Errorf("Current piece must be moved left if game is not waiting")
+			t.Errorf("Current column must be moved left if game is not waiting")
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -276,7 +276,7 @@ func TestCommands(t *testing.T) {
 			if et.Current.X == 2 {
 				break
 			}
-			t.Errorf("Current piece must be at column %d but is at %d", 2, et.Current.X)
+			t.Errorf("Current column must be at column %d but is at %d", 2, et.Current.X)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -290,7 +290,7 @@ func TestCommands(t *testing.T) {
 			if et.Current.X == 3 {
 				break
 			}
-			t.Errorf("Current piece must be at column %d but is at %d", 3, et.Current.X)
+			t.Errorf("Current column must be at column %d but is at %d", 3, et.Current.X)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -304,7 +304,7 @@ func TestCommands(t *testing.T) {
 			if et.Current.Y == 1 {
 				break
 			}
-			t.Errorf("Current piece must be at row %d but is at %d", 1, et.Current.Y)
+			t.Errorf("Current column must be at row %d but is at %d", 1, et.Current.Y)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -319,7 +319,7 @@ func TestCommands(t *testing.T) {
 			if et.Current.Tiles == [3]int{3, 1, 2} {
 				break
 			}
-			t.Errorf("Current piece must be as %v but is as %v", [3]int{3, 1, 2}, et.Current.Tiles)
+			t.Errorf("Current column must be as %v but is as %v", [3]int{3, 1, 2}, et.Current.Tiles)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -350,7 +350,7 @@ func TestWellBounds(t *testing.T) {
 			if et.Current.X == 0 {
 				break
 			}
-			t.Errorf("Current piece must be at column %d but is at %d", 0, et.Current.X)
+			t.Errorf("Current column must be at column %d but is at %d", 0, et.Current.X)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -364,7 +364,7 @@ func TestWellBounds(t *testing.T) {
 			if et.Current.X == 0 {
 				break
 			}
-			t.Errorf("Current piece must be at column %d but is at %d", 0, et.Current.X)
+			t.Errorf("Current column must be at column %d but is at %d", 0, et.Current.X)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -378,7 +378,7 @@ func TestWellBounds(t *testing.T) {
 			if et.Current.Y == 0 {
 				break
 			}
-			t.Errorf("Current piece must be at row %d but is at %d", 0, et.Current.Y)
+			t.Errorf("Current column must be at row %d but is at %d", 0, et.Current.Y)
 		}
 	case <-timeout:
 		t.Errorf("Test timed out")
@@ -488,6 +488,7 @@ func TestScored(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			cfg := getConfig()
 			cfg.InitialSpeed = 20
+			cfg.MaxSpeed = 40
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
 			events := doric.Play(tt.well, tt.rand.build, cfg, command)
@@ -511,7 +512,7 @@ func TestScored(t *testing.T) {
 					case doric.EventRenewed:
 						if asserted.Current.Tiles != tt.expectedCurrent {
 							t.Errorf(
-								"Expected that the next piece was copied to the current one with values %v, got %v",
+								"Expected that the next column was copied to the current one with values %v, got %v",
 								tt.expectedCurrent,
 								asserted.Current.Tiles,
 							)
