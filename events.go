@@ -18,5 +18,5 @@ type EventScored struct {
 type EventRenewed struct {
 	Well    Well
 	Current Column
-	Next    Column
+	Next    [3]int
 }

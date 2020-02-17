@@ -488,6 +488,7 @@ func TestScored(t *testing.T) {
 			timeout := time.After(1 * time.Second)
 			cfg := getConfig()
 			cfg.InitialSpeed = 20
+			cfg.MaxSpeed = 40
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
 			events := doric.Play(tt.well, tt.rand.build, cfg, command)

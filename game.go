@@ -37,8 +37,7 @@ type Config struct {
 type game struct {
 	well         Well
 	current      *Column
-	next         *Column
-	combo        int
+	next         [3]int
 	level        int
 	paused       bool
 	wait         bool
@@ -46,7 +45,6 @@ type game struct {
 	cfg          Config
 	events       chan interface{}
 	speed        float64
-	maxFrequency time.Duration
 	ticker       *time.Ticker
 	build        TilesFactory
 }
@@ -84,7 +82,6 @@ func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan 
 					}
 					continue
 				}
-				game.well.lock(game.current)
 				game.removeLines()
 				game.renewColumns()
 
@@ -98,23 +95,18 @@ func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan 
 	return game.events
 }
 
-func newGame(p Well, builder TilesFactory, cfg Config) *game {
-	game := &game{
-		well:         p.copy(),
-		current:      &Column{Tiles: [3]int{}},
-		next:         &Column{Tiles: [3]int{}},
-		combo:        1,
-		level:        1,
-		cfg:          cfg,
-		events:       make(chan interface{}),
-		speed:        cfg.InitialSpeed,
-		maxFrequency: time.Duration(1000/cfg.MaxSpeed) * time.Millisecond,
-		ticker:       time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
-		build:        builder,
+func newGame(p Well, build TilesFactory, cfg Config) *game {
+	return &game{
+		well:    p.copy(),
+		current: &Column{Tiles: [3]int{}},
+		next:    build(maxTile),
+		level:   1,
+		cfg:     cfg,
+		events:  make(chan interface{}),
+		speed:   cfg.InitialSpeed,
+		ticker:  time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
+		build:   build,
 	}
-	game.next.Tiles = builder(maxTile)
-
-	return game
 }
 
 func (g *game) execute(comm int) {
@@ -144,7 +136,9 @@ func (g *game) execute(comm int) {
 }
 
 func (g *game) removeLines() {
+	g.well.lock(g.current)
 	removed := g.well.markTilesToRemove()
+	combo := 1
 	for removed > 0 {
 		g.totalRemoved += removed
 		if g.totalRemoved/g.cfg.NumberTilesForNextLevel > g.level-1 {
@@ -153,11 +147,11 @@ func (g *game) removeLines() {
 		}
 		g.events <- EventScored{
 			Well:    g.well.copy(),
-			Combo:   g.combo,
+			Combo:   combo,
 			Level:   g.level,
 			Removed: removed,
 		}
-		g.combo++
+		combo++
 		g.well.settle()
 		removed = g.well.markTilesToRemove()
 	}
@@ -165,11 +159,10 @@ func (g *game) removeLines() {
 
 func (g *game) speedUp() {
 	speed := g.speed + g.cfg.SpeedIncrement
-	freq := time.Duration(1000/speed) * time.Millisecond
-	if freq > g.maxFrequency {
+	if speed < g.cfg.MaxSpeed {
 		g.ticker.Stop()
 		g.speed = speed
-		g.ticker = time.NewTicker(freq)
+		g.ticker = time.NewTicker(time.Duration(1000/speed) * time.Millisecond)
 	}
 }
 
@@ -178,13 +171,12 @@ func (g *game) isOver() bool {
 }
 
 func (g *game) renewColumns() {
-	g.current.copy(*g.next, g.well.width()/2)
-	g.next.Tiles = g.build(maxTile)
-	g.combo = 1
+	g.current.copy(g.next, g.well.width()/2)
+	g.next = g.build(maxTile)
 
 	g.events <- EventRenewed{
 		Well:    g.well.copy(),
 		Current: *g.current,
-		Next:    *g.next,
+		Next:    g.next,
 	}
 }
