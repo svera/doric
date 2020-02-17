@@ -13,14 +13,14 @@
 
 ## How to play
 
-The objective of the game is to get the maximum possible score. To do that, player must eliminate falling pieces from the well, aligning
+The objective of the game is to get the maximum possible score. To do that, player must eliminate falling columns from the well, aligning
 3 or more tiles of the same color vertically, horizontally or diagonally. Every 10 tiles removed the falling speed increases slightly.
 
 ### Controls
 
-* **Left** or **right**: Move the current falling piece to the left or to the right
-* **Down**: Move the current falling piece down
-* **Tab**: Rotate piece
+* **Left** or **right**: Move the current falling column to the left or to the right
+* **Down**: Move the current falling column down
+* **Tab**: Rotate column
 * **P**: Pause
 * **Ctrl-c**: Quit
 

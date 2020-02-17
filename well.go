@@ -136,8 +136,8 @@ func (p Well) settle() {
 	}
 }
 
-// lock put the values of the passed piece in the well
-func (p Well) lock(pc *Piece) {
+// lock put the values of the passed column in the well
+func (p Well) lock(pc *Column) {
 	for i, tile := range pc.Tiles {
 		if pc.Y-i < 0 {
 			return

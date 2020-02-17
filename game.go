@@ -6,13 +6,13 @@ import (
 
 // Possible commands coming from the player
 const (
-	// Move the current piece left
+	// Move the current column left
 	CommandLeft = iota
-	// Move the current piece right
+	// Move the current column right
 	CommandRight
-	// Move the current piece down
+	// Move the current column down
 	CommandDown
-	// Rotate tiles in current piece
+	// Rotate tiles in current column
 	CommandRotate
 	// Pause / unpause game (for player use)
 	CommandPauseSwitch
@@ -30,14 +30,14 @@ type Config struct {
 	InitialSpeed float64
 	// SpeedIncrement is how much the speed increases each level in cells/second
 	SpeedIncrement float64
-	// MaxSpeed is the maximum speed falling pieces can reach
+	// MaxSpeed is the maximum speed falling columns can reach
 	MaxSpeed float64
 }
 
 type game struct {
 	well         Well
-	current      *Piece
-	next         *Piece
+	current      *Column
+	next         *Column
 	combo        int
 	level        int
 	paused       bool
@@ -48,17 +48,17 @@ type game struct {
 	speed        float64
 	maxFrequency time.Duration
 	ticker       *time.Ticker
-	factory      TilesFactory
+	build        TilesFactory
 }
 
-// Play starts the game loop in a separate thread, making pieces fall to the bottom of the well at gradually quicker speeds
+// Play starts the game loop in a separate thread, making columns fall to the bottom of the well at gradually quicker speeds
 // as level increases.
 // Game can be controlled sending command codes to the commands channel. Game updates are communicated as events in the returned
 // channel.
-// Game ends when no more new pieces can enter the well, and this will be signaled with the closing of the
+// Game ends when no more new columns can enter the well, and this will be signaled with the closing of the
 // events channel.
-func Play(p Well, factory TilesFactory, cfg Config, commands <-chan int) <-chan interface{} {
-	game := newGame(p, factory, cfg)
+func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan interface{} {
+	game := newGame(p, builder, cfg)
 
 	go func() {
 		defer func() {
@@ -66,7 +66,7 @@ func Play(p Well, factory TilesFactory, cfg Config, commands <-chan int) <-chan 
 			game.ticker.Stop()
 		}()
 
-		game.renewPieces()
+		game.renewColumns()
 		for {
 			select {
 			case comm := <-commands:
@@ -86,7 +86,7 @@ func Play(p Well, factory TilesFactory, cfg Config, commands <-chan int) <-chan 
 				}
 				game.well.lock(game.current)
 				game.removeLines()
-				game.renewPieces()
+				game.renewColumns()
 
 				if game.isOver() {
 					return
@@ -98,11 +98,11 @@ func Play(p Well, factory TilesFactory, cfg Config, commands <-chan int) <-chan 
 	return game.events
 }
 
-func newGame(p Well, factory TilesFactory, cfg Config) *game {
+func newGame(p Well, builder TilesFactory, cfg Config) *game {
 	game := &game{
 		well:         p.copy(),
-		current:      &Piece{Tiles: [3]int{}},
-		next:         &Piece{Tiles: [3]int{}},
+		current:      &Column{Tiles: [3]int{}},
+		next:         &Column{Tiles: [3]int{}},
 		combo:        1,
 		level:        1,
 		cfg:          cfg,
@@ -110,9 +110,9 @@ func newGame(p Well, factory TilesFactory, cfg Config) *game {
 		speed:        cfg.InitialSpeed,
 		maxFrequency: time.Duration(1000/cfg.MaxSpeed) * time.Millisecond,
 		ticker:       time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
-		factory:      factory,
+		build:        builder,
 	}
-	game.next.Tiles = factory(maxTile)
+	game.next.Tiles = builder(maxTile)
 
 	return game
 }
@@ -177,9 +177,9 @@ func (g *game) isOver() bool {
 	return g.well[g.well.width()/2][0] != Empty
 }
 
-func (g *game) renewPieces() {
+func (g *game) renewColumns() {
 	g.current.copy(g.next, g.well.width()/2)
-	g.next.Tiles = g.factory(maxTile)
+	g.next.Tiles = g.build(maxTile)
 	g.combo = 1
 
 	g.events <- EventRenewed{

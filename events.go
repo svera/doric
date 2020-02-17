@@ -1,8 +1,8 @@
 package doric
 
-// EventUpdated is sent as a response to a current piece movement
+// EventUpdated is sent as a response to a current column movement
 type EventUpdated struct {
-	Current Piece
+	Current Column
 }
 
 // EventScored is sent when the three or more tiles of the same color are aligned in the well,
@@ -14,9 +14,9 @@ type EventScored struct {
 	Level   int
 }
 
-// EventRenewed is sent when the current and next pieces are renewed
+// EventRenewed is sent when the current and next columns are renewed
 type EventRenewed struct {
 	Well    Well
-	Current Piece
-	Next    Piece
+	Current Column
+	Next    Column
 }

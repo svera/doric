@@ -7,10 +7,10 @@ import (
 	"github.com/svera/doric"
 )
 
-// Player handles game's commands in the game, like moving the piece currently falling in the well
+// Player handles game's commands in the game, like moving the column currently falling in the well
 type Player struct {
 	*tl.Entity
-	Current  *doric.Piece
+	Current  *doric.Column
 	Command  chan<- int
 	offsetX  int
 	offsetY  int
@@ -21,7 +21,7 @@ type Player struct {
 }
 
 // NewPlayer returns a new Player instance
-func NewPlayer(c *doric.Piece, command chan<- int, message tl.Drawable, offsetX, offsetY int, mux sync.Locker) *Player {
+func NewPlayer(c *doric.Column, command chan<- int, message tl.Drawable, offsetX, offsetY int, mux sync.Locker) *Player {
 	return &Player{
 		Current: c,
 		Command: command,
@@ -32,7 +32,7 @@ func NewPlayer(c *doric.Piece, command chan<- int, message tl.Drawable, offsetX,
 	}
 }
 
-// Draw draws the piece on screen, as required by Termloop's Drawable interface
+// Draw draws the column on screen, as required by Termloop's Drawable interface
 // or the paused message if the game is paused
 func (p *Player) Draw(screen *tl.Screen) {
 	if p.paused {
@@ -65,7 +65,7 @@ func (p *Player) Draw(screen *tl.Screen) {
 	}
 }
 
-// Tick handles events and moves the piece accosdingly if requested, as requested by Termloop's Drawable interface
+// Tick handles events and moves the column accosdingly if requested, as requested by Termloop's Drawable interface
 // as well as the control of the game itself, pausing it
 func (p *Player) Tick(event tl.Event) {
 	if event.Type == tl.EventKey && !p.Finished { // Is it a keyboard event?

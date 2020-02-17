@@ -64,7 +64,7 @@ func startGameLogic(commands chan int) []tl.Drawable {
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
 	wellEntity := NewWell(well, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth, mux)
 	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY, mux)
-	nextPieceEntity := NewNext(&nxt, offsetX+15, offsetY+5, mux)
+	nextColumnEntity := NewNext(&nxt, offsetX+15, offsetY+5, mux)
 	score := tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
 	level := tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 
@@ -90,11 +90,11 @@ func startGameLogic(commands chan int) []tl.Drawable {
 				mux.Lock()
 				wellEntity.Well = t.Well
 				playerEntity.Current = &t.Current
-				nextPieceEntity.Piece = &t.Next
+				nextColumnEntity.Column = &t.Next
 				mux.Unlock()
 			}
 		}
 	}()
 
-	return []tl.Drawable{wellEntity, playerEntity, nextPieceEntity, message, score, level}
+	return []tl.Drawable{wellEntity, playerEntity, nextColumnEntity, message, score, level}
 }
