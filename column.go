@@ -48,10 +48,8 @@ func (p *Column) rotate() {
 }
 
 // copy copies the tiles from the passed column, and resets its position to the initial one
-func (p *Column) copy(next *Column, col int) {
-	p.Tiles[0] = next.Tiles[0]
-	p.Tiles[1] = next.Tiles[1]
-	p.Tiles[2] = next.Tiles[2]
+func (p *Column) copy(next Column, col int) {
+	p.Tiles = next.Tiles
 	p.X = col
 	p.Y = 0
 }

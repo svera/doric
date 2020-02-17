@@ -178,7 +178,7 @@ func (g *game) isOver() bool {
 }
 
 func (g *game) renewColumns() {
-	g.current.copy(g.next, g.well.width()/2)
+	g.current.copy(*g.next, g.well.width()/2)
 	g.next.Tiles = g.build(maxTile)
 	g.combo = 1
 
