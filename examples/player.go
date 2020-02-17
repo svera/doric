@@ -65,7 +65,7 @@ func (p *Player) Draw(screen *tl.Screen) {
 	}
 }
 
-// Tick handles events and moves the column accosdingly if requested, as requested by Termloop's Drawable interface
+// Tick handles events and moves the column accordingly if requested, as defined by Termloop's Drawable interface
 // as well as the control of the game itself, pausing it
 func (p *Player) Tick(event tl.Event) {
 	if event.Type == tl.EventKey && !p.Finished { // Is it a keyboard event?
