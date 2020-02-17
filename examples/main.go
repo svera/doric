@@ -45,9 +45,16 @@ func startGameLogic(commands chan int) []tl.Drawable {
 		MaxSpeed:                13,
 	}
 
-	source := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(source)
-	events := doric.Play(well, r, cfg, commands)
+	factory := func(n int) [3]int {
+		source := rand.NewSource(time.Now().UnixNano())
+		rand.New(source)
+		return [3]int{
+			rand.Intn(n) + 1,
+			rand.Intn(n) + 1,
+			rand.Intn(n) + 1,
+		}
+	}
+	events := doric.Play(well, factory, cfg, commands)
 
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Current

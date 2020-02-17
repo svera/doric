@@ -8,19 +8,19 @@ import (
 	"github.com/svera/doric"
 )
 
-// mockRandomizer implements the Randomizer interface to generate random integers
-type mockRandomizer struct {
-	Values  []int
-	current int
+// mockTilesFactory implements the TilesFactory function to generate random tilesets
+type mockTilesFactory struct {
+	Tilesets [][3]int
+	current  int
 }
 
-// Intn return numbers set in the Values property in the same order
-// If all numbers inside Values were returned, the slice is ran again from the beginning
-func (m *mockRandomizer) Intn(n int) int {
-	if m.current == len(m.Values) {
+// build returns a tileset in the Tilesets property in the same order
+// If all tilesets inside Tilesets were returned, the slice is ran again from the beginning
+func (m *mockTilesFactory) build(n int) [3]int {
+	if m.current == len(m.Tilesets) {
 		m.current = 0
 	}
-	val := m.Values[m.current]
+	val := m.Tilesets[m.current]
 	m.current++
 	return val
 }
@@ -37,10 +37,14 @@ func getConfig() doric.Config {
 func TestGameOver(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(1, doric.StandardWidth)
-	r := &mockRandomizer{Values: []int{0}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 1, 1},
+		},
+	}
 	command := make(chan int)
 	well[3][0] = 1
-	events := doric.Play(well, r, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	for {
 		select {
@@ -57,9 +61,13 @@ func TestGameOver(t *testing.T) {
 func TestQuit(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockRandomizer{Values: []int{0}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 1, 1},
+		},
+	}
 	command := make(chan int)
-	events := doric.Play(well, r, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -82,9 +90,13 @@ func TestQuit(t *testing.T) {
 func TestPause(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockRandomizer{Values: []int{0, 1, 2}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 2, 3},
+		},
+	}
 	command := make(chan int)
-	events := doric.Play(well, r, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -152,11 +164,15 @@ func TestPause(t *testing.T) {
 func TestWait(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockRandomizer{Values: []int{0, 1, 2}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 2, 3},
+		},
+	}
 	command := make(chan int)
 	cfg := getConfig()
 	cfg.InitialSpeed = 0.5
-	events := doric.Play(well, r, cfg, command)
+	events := doric.Play(well, factory.build, cfg, command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -240,9 +256,13 @@ func TestWait(t *testing.T) {
 func TestCommands(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	r := &mockRandomizer{Values: []int{0, 1, 2}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 2, 3},
+		},
+	}
 	command := make(chan int)
-	events := doric.Play(well, r, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -310,9 +330,13 @@ func TestCommands(t *testing.T) {
 func TestWellBounds(t *testing.T) {
 	timeout := time.After(1 * time.Second)
 	well := doric.NewWell(1, 1)
-	r := &mockRandomizer{Values: []int{0, 1, 2}}
+	factory := &mockTilesFactory{
+		Tilesets: [][3]int{
+			[3]int{1, 2, 3},
+		},
+	}
 	command := make(chan int)
-	events := doric.Play(well, r, getConfig(), command)
+	events := doric.Play(well, factory.build, getConfig(), command)
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -366,7 +390,7 @@ func TestScored(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		well                    doric.Well
-		rand                    *mockRandomizer
+		rand                    *mockTilesFactory
 		expectedWell            doric.Well
 		expectedRenewedWell     doric.Well
 		expectedRemoved         int
@@ -376,7 +400,12 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
-			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand: &mockTilesFactory{
+				Tilesets: [][3]int{
+					[3]int{1, 1, 1},
+					[3]int{4, 5, 6},
+				},
+			},
 			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -399,7 +428,12 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
-			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand: &mockTilesFactory{
+				Tilesets: [][3]int{
+					[3]int{1, 1, 1},
+					[3]int{4, 5, 6},
+				},
+			},
 			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
 				[]int{1, 1, 0, 0, 1, 1},
@@ -422,7 +456,12 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
-			rand:                    &mockRandomizer{Values: []int{0, 0, 0, 3, 4, 5}},
+			rand: &mockTilesFactory{
+				Tilesets: [][3]int{
+					[3]int{1, 1, 1},
+					[3]int{4, 5, 6},
+				},
+			},
 			well: transpose(doric.Well{
 				[]int{1, 0, 0, 0, 0, 1},
 				[]int{2, 1, 0, 0, 1, 2},
@@ -451,7 +490,7 @@ func TestScored(t *testing.T) {
 			cfg.InitialSpeed = 20
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
-			events := doric.Play(tt.well, tt.rand, cfg, command)
+			events := doric.Play(tt.well, tt.rand.build, cfg, command)
 
 			<-events
 
@@ -496,13 +535,18 @@ func TestScoredCombo(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		well                    doric.Well
-		rand                    *mockRandomizer
+		rand                    *mockTilesFactory
 		expectedWells           []doric.Well
 	}{
 		{
 			name:                    "Scored with combo",
 			numberTilesForNextLevel: 20,
-			rand:                    &mockRandomizer{Values: []int{0, 1, 2, 3, 4, 5}},
+			rand: &mockTilesFactory{
+				Tilesets: [][3]int{
+					[3]int{1, 2, 3},
+					[3]int{4, 5, 6},
+				},
+			},
 			well: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
 				[]int{0, 0, 0, 0, 0, 0},
@@ -530,7 +574,7 @@ func TestScoredCombo(t *testing.T) {
 			cfg.InitialSpeed = 20
 			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
 			command := make(chan int)
-			events := doric.Play(tt.well, tt.rand, cfg, command)
+			events := doric.Play(tt.well, tt.rand.build, cfg, command)
 
 			<-events
 

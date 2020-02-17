@@ -16,11 +16,18 @@ func Example() {
 	}
 	command := make(chan int)
 	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	source := rand.NewSource(time.Now().UnixNano())
-	rnd := rand.New(source)
+	factory := func(n int) [3]int {
+		source := rand.NewSource(time.Now().UnixNano())
+		rand.New(source)
+		return [3]int{
+			rand.Intn(n) + 1,
+			rand.Intn(n) + 1,
+			rand.Intn(n) + 1,
+		}
+	}
 
 	// Start the game and return game events in the events channel
-	events := doric.Play(well, rnd, cfg, command)
+	events := doric.Play(well, factory, cfg, command)
 
 	defer func() {
 		close(command)
