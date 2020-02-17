@@ -22,6 +22,8 @@ const (
 	CommandQuit
 )
 
+const nanosecond = 1000000000
+
 // Config holds different parameters related with the game
 type Config struct {
 	// How many tiles a player has to destroy to advance to the next level
@@ -104,7 +106,7 @@ func newGame(p Well, build TilesFactory, cfg Config) *game {
 		cfg:     cfg,
 		events:  make(chan interface{}),
 		speed:   cfg.InitialSpeed,
-		ticker:  time.NewTicker(time.Duration(1000/cfg.InitialSpeed) * time.Millisecond),
+		ticker:  time.NewTicker(time.Duration(nanosecond / cfg.InitialSpeed)),
 		build:   build,
 	}
 }
@@ -162,7 +164,7 @@ func (g *game) speedUp() {
 	if speed < g.cfg.MaxSpeed {
 		g.ticker.Stop()
 		g.speed = speed
-		g.ticker = time.NewTicker(time.Duration(1000/speed) * time.Millisecond)
+		g.ticker = time.NewTicker(time.Duration(nanosecond / speed))
 	}
 }
 
