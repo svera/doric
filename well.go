@@ -23,7 +23,7 @@ type coords struct {
 type Well [][]int
 
 // NewWell return a new empty Well instance
-func NewWell(rows, cols int) Well {
+func NewWell(cols, rows int) Well {
 	var p Well
 	p = make([][]int, cols)
 	for i := range p {
@@ -147,7 +147,7 @@ func (p Well) lock(pc *Column) {
 }
 
 func (p Well) copy() Well {
-	well := NewWell(p.height(), p.width())
+	well := NewWell(p.width(), p.height())
 	for i := range p {
 		copy(well[i], p[i])
 	}

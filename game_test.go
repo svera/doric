@@ -25,7 +25,7 @@ func (m *mockTilesetBuilder) build(n int) [3]int {
 	return val
 }
 
-func getConfig() doric.Config {
+func defaultConfig() doric.Config {
 	return doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSpeed:            5,
@@ -34,17 +34,29 @@ func getConfig() doric.Config {
 	}
 }
 
-func TestGameOver(t *testing.T) {
+func setup(cfg doric.Config, well doric.Well, ts [][3]int) (chan<- int, <-chan interface{}, <-chan time.Time) {
 	timeout := time.After(1 * time.Second)
-	well := doric.NewWell(1, doric.StandardWidth)
 	factory := &mockTilesetBuilder{
-		Tilesets: [][3]int{
-			{1, 1, 1},
-		},
+		Tilesets: ts,
 	}
-	command := make(chan int)
+	commands := make(chan int)
+	events := doric.Play(well, factory.build, cfg, commands)
+
+	// First event received is just before game logic loop begins
+	// the actual test will happen after that
+	<-events
+
+	return commands, events, timeout
+}
+
+func TestGameOver(t *testing.T) {
+	well := doric.NewWell(doric.StandardWidth, 1)
 	well[3][0] = 1
-	events := doric.Play(well, factory.build, getConfig(), command)
+	_, events, timeout := setup(
+		defaultConfig(),
+		well,
+		[][3]int{{1, 1, 1}},
+	)
 
 	for {
 		select {
@@ -59,20 +71,12 @@ func TestGameOver(t *testing.T) {
 }
 
 func TestQuit(t *testing.T) {
-	timeout := time.After(1 * time.Second)
-	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-	factory := &mockTilesetBuilder{
-		Tilesets: [][3]int{
-			{1, 1, 1},
-		},
-	}
-	command := make(chan int)
-	events := doric.Play(well, factory.build, getConfig(), command)
-
-	// First event received is just before game logic loop begins
-	// the actual test will happen after that
-	<-events
-	command <- doric.CommandQuit
+	commands, events, timeout := setup(
+		defaultConfig(),
+		doric.NewWell(doric.StandardWidth, doric.StandardHeight),
+		[][3]int{{1, 2, 3}},
+	)
+	commands <- doric.CommandQuit
 
 	for {
 		select {
@@ -87,310 +91,246 @@ func TestQuit(t *testing.T) {
 }
 
 func TestPause(t *testing.T) {
-	setup := func() (chan<- int, <-chan interface{}) {
-		well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-		factory := &mockTilesetBuilder{
-			Tilesets: [][3]int{
-				{1, 2, 3},
+	tests := []struct {
+		Name           string
+		Command        int
+		ExpectedUpdate doric.EventUpdated
+	}{
+		{
+			Name:    "Must not move left if paused",
+			Command: doric.CommandLeft,
+			ExpectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
 			},
-		}
-		command := make(chan int)
-		events := doric.Play(well, factory.build, getConfig(), command)
-
-		// First event received is just before game logic loop begins
-		// the actual test will happen after that
-		<-events
-		command <- doric.CommandPauseSwitch
-
-		return command, events
+		},
+		{
+			Name:    "Must not move right if paused",
+			Command: doric.CommandRight,
+			ExpectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
+		{
+			Name:    "Must not move down if paused",
+			Command: doric.CommandDown,
+			ExpectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
+		{
+			Name:    "Must not rotate if paused",
+			Command: doric.CommandRotate,
+			ExpectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
 	}
 
-	timeout := time.After(1 * time.Second)
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			commands, events, timeout := setup(
+				defaultConfig(),
+				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
+				[][3]int{{1, 2, 3}},
+			)
 
-	t.Run("Must not move left if paused", func(t *testing.T) {
-		command, events := setup()
+			commands <- doric.CommandPauseSwitch
+			commands <- test.Command
 
-		command <- doric.CommandLeft
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok {
-				if et.Column.X == 3 {
+			select {
+			case ev := <-events:
+				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.ExpectedUpdate) {
 					break
 				}
-				t.Errorf("Current column must not be moved left if game is paused")
+				t.Errorf("Current column must not move or rotate if game is paused")
+
+			case <-timeout:
+				t.Errorf("Test timed out")
 			}
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not move right if paused", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandRight
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok {
-				if et.Column.X == 3 {
-					break
-				}
-				t.Errorf("Current column must not be moved right if game is paused")
-			}
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not move down if paused", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandDown
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Y == 0 {
-				break
-			}
-			t.Errorf("Current column must not be moved down if game is paused")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not rotate if paused", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandRotate
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Tileset == [3]int{1, 2, 3} {
-				break
-			}
-			t.Errorf("Current column must not be rotated if game is paused")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
+		})
+	}
 }
 
 func TestWait(t *testing.T) {
-	setup := func() (chan<- int, <-chan interface{}) {
-		well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-		factory := &mockTilesetBuilder{
-			Tilesets: [][3]int{
-				{1, 2, 3},
+	tests := []struct {
+		name           string
+		command        int
+		expectedUpdate doric.EventUpdated
+	}{
+		{
+			name:    "Must not move left if waiting",
+			command: doric.CommandLeft,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
 			},
-		}
-		command := make(chan int)
-		events := doric.Play(well, factory.build, getConfig(), command)
-
-		// First event received is just before game logic loop begins
-		// the actual test will happen after that
-		<-events
-		command <- doric.CommandWaitSwitch
-
-		return command, events
+		},
+		{
+			name:    "Must not move right if waiting",
+			command: doric.CommandRight,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
+		{
+			name:    "Must not move down if waiting",
+			command: doric.CommandDown,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
+		{
+			name:    "Must not rotate if waiting",
+			command: doric.CommandRotate,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
 	}
 
-	timeout := time.After(1 * time.Second)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			commands, events, timeout := setup(
+				defaultConfig(),
+				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
+				[][3]int{{1, 2, 3}},
+			)
 
-	t.Run("Must not move left if waiting", func(t *testing.T) {
-		command, events := setup()
+			commands <- doric.CommandWaitSwitch
+			commands <- test.command
 
-		command <- doric.CommandLeft
+			select {
+			case ev := <-events:
+				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.expectedUpdate) {
+					break
+				}
+				t.Errorf("Current column must not move or rotate if game is waiting")
 
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 3 {
-				break
+			case <-timeout:
+				t.Errorf("Test timed out")
 			}
-			t.Errorf("Current column must not be moved left if game is waiting")
-
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not move right if waiting", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandRight
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 3 {
-				break
-			}
-			t.Errorf("Current column must not be moved right if game is waiting")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not move down if waiting", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandDown
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Y == 0 {
-				break
-			}
-			t.Errorf("Current column must not be moved down if game is waiting")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must not rotate if waiting", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandRotate
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Tileset == [3]int{1, 2, 3} {
-				break
-			}
-			t.Errorf("Current column must not be rotated if game is waiting")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Commands must work after unwaiting", func(t *testing.T) {
-		command, events := setup()
-
-		command <- doric.CommandWaitSwitch
-		command <- doric.CommandLeft
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 2 {
-				break
-			}
-			t.Errorf("Current column must be moved left if game is not waiting")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
+		})
+	}
 }
 
 func TestCommands(t *testing.T) {
-	setup := func() (chan<- int, <-chan interface{}) {
-		well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
-		factory := &mockTilesetBuilder{
-			Tilesets: [][3]int{
-				{1, 2, 3},
+	tests := []struct {
+		name           string
+		command        int
+		expectedUpdate doric.EventUpdated
+	}{
+		{
+			name:    "Must move left",
+			command: doric.CommandLeft,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       2,
+					Y:       0,
+				},
 			},
-		}
-		command := make(chan int)
-		events := doric.Play(well, factory.build, getConfig(), command)
-		return command, events
+		},
+		{
+			name:    "Must move right",
+			command: doric.CommandRight,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       4,
+					Y:       0,
+				},
+			},
+		},
+		{
+			name:    "Must move down",
+			command: doric.CommandDown,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       3,
+					Y:       1,
+				},
+			},
+		},
+		{
+			name:    "Must rotate",
+			command: doric.CommandRotate,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{3, 1, 2},
+					X:       3,
+					Y:       0,
+				},
+			},
+		},
 	}
 
-	timeout := time.After(1 * time.Second)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			commands, events, timeout := setup(
+				defaultConfig(),
+				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
+				[][3]int{{1, 2, 3}},
+			)
+			commands <- test.command
 
-	t.Run("Must move left", func(t *testing.T) {
-		command, events := setup()
-		// First event received is just before game logic loop begins
-		// the actual test will happen after that
-		<-events
+			select {
+			case ev := <-events:
+				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.expectedUpdate) {
+					break
+				}
+				t.Errorf("Current column must move or rotate")
 
-		command <- doric.CommandLeft
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 2 {
-				break
+			case <-timeout:
+				t.Errorf("Test timed out")
 			}
-			t.Errorf("Current column must have been moved left")
-
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must move right", func(t *testing.T) {
-		command, events := setup()
-
-		<-events
-
-		command <- doric.CommandRight
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 4 {
-				break
-			}
-			t.Errorf("Current column must have been moved right")
-
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must move down", func(t *testing.T) {
-		command, events := setup()
-
-		<-events
-
-		command <- doric.CommandDown
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Y == 1 {
-				break
-			}
-			t.Errorf("Current column must have been moved down")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
-
-	t.Run("Must rotate", func(t *testing.T) {
-		command, events := setup()
-
-		<-events
-
-		command <- doric.CommandRotate
-
-		select {
-		case ev := <-events:
-			if et, ok := ev.(doric.EventUpdated); ok && et.Column.Tileset == [3]int{3, 1, 2} {
-				break
-			}
-			t.Errorf("Current column must have been rotate")
-		case <-timeout:
-			t.Errorf("Test timed out")
-		}
-	})
+		})
+	}
 }
 
 func TestWellBounds(t *testing.T) {
-	timeout := time.After(1 * time.Second)
-	well := doric.NewWell(1, 1)
-	factory := &mockTilesetBuilder{
-		Tilesets: [][3]int{
-			{1, 2, 3},
-		},
-	}
-	command := make(chan int)
-	events := doric.Play(well, factory.build, getConfig(), command)
+	commands, events, timeout := setup(
+		defaultConfig(),
+		doric.NewWell(1, 1),
+		[][3]int{{1, 2, 3}},
+	)
 
-	// First event received is just before game logic loop begins
-	// the actual test will happen after that
-	<-events
-
-	command <- doric.CommandLeft
+	commands <- doric.CommandLeft
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 0 {
+		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.X == 0 {
 			break
 		}
 		t.Errorf("Current column must not move left as it clashes with well's left border")
@@ -398,11 +338,11 @@ func TestWellBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	command <- doric.CommandRight
+	commands <- doric.CommandRight
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(doric.EventUpdated); ok && et.Column.X == 0 {
+		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.X == 0 {
 			break
 		}
 		t.Errorf("Current column must not move right as it clashes with well's right border")
@@ -410,11 +350,11 @@ func TestWellBounds(t *testing.T) {
 		t.Errorf("Test timed out")
 	}
 
-	command <- doric.CommandDown
+	commands <- doric.CommandDown
 
 	select {
 	case ev := <-events:
-		if et, ok := ev.(doric.EventUpdated); ok && et.Column.Y == 0 {
+		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.Y == 0 {
 			break
 		}
 		t.Errorf("Current column must not move down as it clashes with well's bottom")
@@ -428,7 +368,7 @@ func TestScored(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		well                    doric.Well
-		rand                    *mockTilesetBuilder
+		tilesets                [][3]int
 		expectedWell            doric.Well
 		expectedRenewedWell     doric.Well
 		expectedRemoved         int
@@ -438,11 +378,9 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with no level up",
 			numberTilesForNextLevel: 20,
-			rand: &mockTilesetBuilder{
-				Tilesets: [][3]int{
-					{1, 1, 1},
-					{4, 5, 6},
-				},
+			tilesets: [][3]int{
+				{1, 1, 1},
+				{4, 5, 6},
 			},
 			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
@@ -466,11 +404,9 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Scored with level up",
 			numberTilesForNextLevel: 1,
-			rand: &mockTilesetBuilder{
-				Tilesets: [][3]int{
-					{1, 1, 1},
-					{4, 5, 6},
-				},
+			tilesets: [][3]int{
+				{1, 1, 1},
+				{4, 5, 6},
 			},
 			well: transpose(doric.Well{
 				[]int{0, 1, 0, 0, 0, 0},
@@ -494,11 +430,9 @@ func TestScored(t *testing.T) {
 		{
 			name:                    "Diagonal lines",
 			numberTilesForNextLevel: 20,
-			rand: &mockTilesetBuilder{
-				Tilesets: [][3]int{
-					{1, 1, 1},
-					{4, 5, 6},
-				},
+			tilesets: [][3]int{
+				{1, 1, 1},
+				{4, 5, 6},
 			},
 			well: transpose(doric.Well{
 				[]int{1, 0, 0, 0, 0, 1},
@@ -521,15 +455,17 @@ func TestScored(t *testing.T) {
 		},
 	}
 
-	for _, tt := range scoredTests {
-		t.Run(tt.name, func(t *testing.T) {
-			timeout := time.After(1 * time.Second)
-			cfg := getConfig()
+	for _, test := range scoredTests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := defaultConfig()
 			cfg.InitialSpeed = 20
 			cfg.MaxSpeed = 40
-			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			command := make(chan int)
-			events := doric.Play(tt.well, tt.rand.build, cfg, command)
+			cfg.NumberTilesForNextLevel = test.numberTilesForNextLevel
+			_, events, timeout := setup(
+				cfg,
+				test.well,
+				test.tilesets,
+			)
 
 			<-events
 
@@ -538,25 +474,25 @@ func TestScored(t *testing.T) {
 				case ev := <-events:
 					switch asserted := ev.(type) {
 					case doric.EventScored:
-						if asserted.Removed != tt.expectedRemoved {
-							t.Errorf("Expected %d removed tiles but got %d", tt.expectedRemoved, asserted.Removed)
+						if asserted.Removed != test.expectedRemoved {
+							t.Errorf("Expected %d removed tiles but got %d", test.expectedRemoved, asserted.Removed)
 						}
-						if asserted.Level != tt.expectedLevel {
-							t.Errorf("Expected level %d but got %d", tt.expectedLevel, asserted.Level)
+						if asserted.Level != test.expectedLevel {
+							t.Errorf("Expected level %d but got %d", test.expectedLevel, asserted.Level)
 						}
-						if !reflect.DeepEqual(tt.expectedWell, asserted.Well) {
-							t.Errorf("Expected well %v but got %v", tt.expectedWell, asserted.Well)
+						if !reflect.DeepEqual(test.expectedWell, asserted.Well) {
+							t.Errorf("Expected well %v but got %v", test.expectedWell, asserted.Well)
 						}
 					case doric.EventRenewed:
-						if asserted.Column.Tileset != tt.expectedCurrent {
+						if asserted.Column.Tileset != test.expectedCurrent {
 							t.Errorf(
 								"Expected that the next column was copied to the current one with values %v, got %v",
-								tt.expectedCurrent,
+								test.expectedCurrent,
 								asserted.Column.Tileset,
 							)
 						}
-						if !reflect.DeepEqual(tt.expectedRenewedWell, asserted.Well) {
-							t.Errorf("Expected well %v but got %v", tt.expectedRenewedWell, asserted.Well)
+						if !reflect.DeepEqual(test.expectedRenewedWell, asserted.Well) {
+							t.Errorf("Expected well %v but got %v", test.expectedRenewedWell, asserted.Well)
 						}
 						return
 					}
@@ -574,17 +510,15 @@ func TestScoredCombo(t *testing.T) {
 		name                    string
 		numberTilesForNextLevel int
 		well                    doric.Well
-		rand                    *mockTilesetBuilder
+		tilesets                [][3]int
 		expectedWells           []doric.Well
 	}{
 		{
 			name:                    "Scored with combo",
 			numberTilesForNextLevel: 20,
-			rand: &mockTilesetBuilder{
-				Tilesets: [][3]int{
-					{1, 2, 3},
-					{4, 5, 6},
-				},
+			tilesets: [][3]int{
+				{1, 2, 3},
+				{4, 5, 6},
 			},
 			well: transpose(doric.Well{
 				[]int{0, 0, 0, 0, 0, 0},
@@ -606,14 +540,16 @@ func TestScoredCombo(t *testing.T) {
 		},
 	}
 
-	for _, tt := range comboTests {
-		t.Run(tt.name, func(t *testing.T) {
-			timeout := time.After(1 * time.Second)
-			cfg := getConfig()
+	for _, test := range comboTests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := defaultConfig()
 			cfg.InitialSpeed = 20
-			cfg.NumberTilesForNextLevel = tt.numberTilesForNextLevel
-			command := make(chan int)
-			events := doric.Play(tt.well, tt.rand.build, cfg, command)
+			cfg.NumberTilesForNextLevel = test.numberTilesForNextLevel
+			_, events, timeout := setup(
+				cfg,
+				test.well,
+				test.tilesets,
+			)
 
 			<-events
 
@@ -626,10 +562,10 @@ func TestScoredCombo(t *testing.T) {
 						if asserted.Combo != count+1 {
 							t.Errorf("Expected combo value %d but got %d", count, asserted.Combo)
 						}
-						if !reflect.DeepEqual(tt.expectedWells[count], asserted.Well) {
-							t.Errorf("Expected well %v but got %v", tt.expectedWells[count], asserted.Well)
+						if !reflect.DeepEqual(test.expectedWells[count], asserted.Well) {
+							t.Errorf("Expected well %v but got %v", test.expectedWells[count], asserted.Well)
 						}
-						if count == len(tt.expectedWells)-1 {
+						if count == len(test.expectedWells)-1 {
 							return
 						}
 						count++
@@ -650,7 +586,7 @@ func TestScoredCombo(t *testing.T) {
 func transpose(slice doric.Well) doric.Well {
 	xl := len(slice[0])
 	yl := len(slice)
-	result := doric.NewWell(yl, xl)
+	result := doric.NewWell(xl, yl)
 	for i := 0; i < xl; i++ {
 		for j := 0; j < yl; j++ {
 			result[i][j] = slice[j][i]

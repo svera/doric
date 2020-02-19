@@ -37,7 +37,7 @@ func setUpMainLevel(mainLevel *tl.BaseLevel, entities []tl.Drawable) {
 }
 
 func startGameLogic(commands chan int) []tl.Drawable {
-	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardWidth, doric.StandardHeight)
 	cfg := doric.Config{
 		NumberTilesForNextLevel: 10,
 		InitialSpeed:            0.5,

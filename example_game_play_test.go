@@ -15,7 +15,7 @@ func Example() {
 		MaxSpeed:                13,
 	}
 	command := make(chan int)
-	well := doric.NewWell(doric.StandardHeight, doric.StandardWidth)
+	well := doric.NewWell(doric.StandardWidth, doric.StandardHeight)
 	factory := func(n int) [3]int {
 		source := rand.NewSource(time.Now().UnixNano())
 		rand.New(source)
