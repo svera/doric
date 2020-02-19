@@ -38,8 +38,8 @@ type Config struct {
 
 type game struct {
 	well         Well
-	current      *Column
-	next         [3]int
+	column       *Column
+	nextTileset  [3]int
 	level        int
 	paused       bool
 	wait         bool
@@ -48,7 +48,7 @@ type game struct {
 	events       chan interface{}
 	speed        float64
 	ticker       *time.Ticker
-	build        TilesFactory
+	build        TilesetBuilder
 }
 
 // Play starts the game loop in a separate thread, making columns fall to the bottom of the well at gradually quicker speeds
@@ -57,7 +57,7 @@ type game struct {
 // channel.
 // Game ends when no more new columns can enter the well, and this will be signaled with the closing of the
 // events channel.
-func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan interface{} {
+func Play(p Well, builder TilesetBuilder, cfg Config, commands <-chan int) <-chan interface{} {
 	game := newGame(p, builder, cfg)
 
 	go func() {
@@ -66,7 +66,7 @@ func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan 
 			game.ticker.Stop()
 		}()
 
-		game.renewColumns()
+		game.renewColumn()
 		for {
 			select {
 			case comm := <-commands:
@@ -78,14 +78,14 @@ func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan 
 				if game.paused || game.wait {
 					continue
 				}
-				if game.current.down(game.well) {
+				if game.column.down(game.well) {
 					game.events <- EventUpdated{
-						Current: *game.current,
+						Column: *game.column,
 					}
 					continue
 				}
 				game.removeLines()
-				game.renewColumns()
+				game.renewColumn()
 
 				if game.isOver() {
 					return
@@ -97,17 +97,17 @@ func Play(p Well, builder TilesFactory, cfg Config, commands <-chan int) <-chan 
 	return game.events
 }
 
-func newGame(p Well, build TilesFactory, cfg Config) *game {
+func newGame(p Well, build TilesetBuilder, cfg Config) *game {
 	return &game{
-		well:    p.copy(),
-		current: &Column{Tiles: [3]int{}},
-		next:    build(maxTile),
-		level:   1,
-		cfg:     cfg,
-		events:  make(chan interface{}),
-		speed:   cfg.InitialSpeed,
-		ticker:  time.NewTicker(time.Duration(nanosecond / cfg.InitialSpeed)),
-		build:   build,
+		well:        p.copy(),
+		column:      &Column{Tileset: [3]int{}},
+		nextTileset: build(maxTile),
+		level:       1,
+		cfg:         cfg,
+		events:      make(chan interface{}),
+		speed:       cfg.InitialSpeed,
+		ticker:      time.NewTicker(time.Duration(nanosecond / cfg.InitialSpeed)),
+		build:       build,
 	}
 }
 
@@ -123,22 +123,22 @@ func (g *game) execute(comm int) {
 	if !g.paused && !g.wait {
 		switch comm {
 		case CommandLeft:
-			g.current.left(g.well)
+			g.column.left(g.well)
 		case CommandRight:
-			g.current.right(g.well)
+			g.column.right(g.well)
 		case CommandDown:
-			g.current.down(g.well)
+			g.column.down(g.well)
 		case CommandRotate:
-			g.current.rotate()
+			g.column.rotate()
 		}
 	}
 	g.events <- EventUpdated{
-		Current: *g.current,
+		Column: *g.column,
 	}
 }
 
 func (g *game) removeLines() {
-	g.well.lock(g.current)
+	g.well.lock(g.column)
 	removed := g.well.markTilesToRemove()
 	combo := 1
 	for removed > 0 {
@@ -172,13 +172,13 @@ func (g *game) isOver() bool {
 	return g.well[g.well.width()/2][0] != Empty
 }
 
-func (g *game) renewColumns() {
-	g.current.copy(g.next, g.well.width()/2)
-	g.next = g.build(maxTile)
+func (g *game) renewColumn() {
+	g.column.reset(g.nextTileset, g.well.width()/2)
+	g.nextTileset = g.build(maxTile)
 
 	g.events <- EventRenewed{
-		Well:    g.well.copy(),
-		Current: *g.current,
-		Next:    g.next,
+		Well:        g.well.copy(),
+		Column:      *g.column,
+		NextTileset: g.nextTileset,
 	}
 }

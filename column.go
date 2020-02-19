@@ -3,15 +3,15 @@ package doric
 // maxTile is the maximum tile value a column can contain
 const maxTile = 6
 
-// TilesFactory defines the signature of the method to build a column tileset.
-type TilesFactory func(int) [3]int
+// TilesetBuilder defines the signature of the method to build a column tileset.
+type TilesetBuilder func(int) [3]int
 
 // Column represents a column to fall in the well
 type Column struct {
-	// Tiles composing the column. Tile at index 0 corresponds to upper one,
+	// Tileset composing the column. Tile at index 0 corresponds to upper one,
 	// while tile at index 2 refers to the bottom one. Possible tile values go from
 	// 1 to maxTile.
-	Tiles [3]int
+	Tileset [3]int
 	// Position of the column in the well, using its bottom tile as reference.
 	X, Y int
 }
@@ -43,13 +43,13 @@ func (p *Column) down(well Well) bool {
 
 // rotate rotates column tiles down. Last tile is moved to the first one
 func (p *Column) rotate() {
-	p.Tiles[0], p.Tiles[2] = p.Tiles[2], p.Tiles[0]
-	p.Tiles[1], p.Tiles[2] = p.Tiles[2], p.Tiles[1]
+	p.Tileset[0], p.Tileset[2] = p.Tileset[2], p.Tileset[0]
+	p.Tileset[1], p.Tileset[2] = p.Tileset[2], p.Tileset[1]
 }
 
-// copy copies the tiles from the passed column, and resets its position to the initial one
-func (p *Column) copy(next [3]int, col int) {
-	p.Tiles = next
+// reset copies the passed tileset, and resets its position to the initial one
+func (p *Column) reset(next [3]int, col int) {
+	p.Tileset = next
 	p.X = col
 	p.Y = 0
 }

@@ -138,7 +138,7 @@ func (p Well) settle() {
 
 // lock put the values of the passed column in the well
 func (p Well) lock(pc *Column) {
-	for i, tile := range pc.Tiles {
+	for i, tile := range pc.Tileset {
 		if pc.Y-i < 0 {
 			return
 		}

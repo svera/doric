@@ -57,16 +57,16 @@ func startGameLogic(commands chan int) []tl.Drawable {
 	events := doric.Play(well, factory, cfg, commands)
 
 	firstUpdate := <-events
-	cur := firstUpdate.(doric.EventRenewed).Current
-	nxt := firstUpdate.(doric.EventRenewed).Next
+	cur := firstUpdate.(doric.EventRenewed).Column
+	nxt := firstUpdate.(doric.EventRenewed).NextTileset
 
 	mux := &sync.Mutex{}
 	message := tl.NewText(offsetX+1, offsetY+5, "", tl.ColorBlack, tl.ColorWhite)
 	wellEntity := NewWell(well, offsetX, offsetY, doric.StandardHeight, doric.StandardWidth, mux)
 	playerEntity := NewPlayer(&cur, commands, message, offsetX, offsetY, mux)
-	nextColumnEntity := NewNext(nxt, offsetX+15, offsetY+5, mux)
-	score := tl.NewText(offsetX+15, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
-	level := tl.NewText(offsetX+15, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
+	nextColumnEntity := NewNext(nxt, offsetX+16, offsetY+5, mux)
+	score := tl.NewText(offsetX+16, offsetY, fmt.Sprintf("Score: %d", 0), tl.ColorWhite, tl.ColorBlack)
+	level := tl.NewText(offsetX+16, offsetY+1, fmt.Sprintf("Level: %d", 1), tl.ColorWhite, tl.ColorBlack)
 
 	go func() {
 		points := 0
@@ -84,13 +84,13 @@ func startGameLogic(commands chan int) []tl.Drawable {
 				mux.Unlock()
 			case doric.EventUpdated:
 				mux.Lock()
-				playerEntity.Current = &t.Current
+				playerEntity.Current = &t.Column
 				mux.Unlock()
 			case doric.EventRenewed:
 				mux.Lock()
 				wellEntity.Well = t.Well
-				playerEntity.Current = &t.Current
-				nextColumnEntity.Column = t.Next
+				playerEntity.Current = &t.Column
+				nextColumnEntity.Column = t.NextTileset
 				mux.Unlock()
 			}
 		}
