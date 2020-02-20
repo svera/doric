@@ -320,46 +320,65 @@ func TestCommands(t *testing.T) {
 }
 
 func TestWellBounds(t *testing.T) {
-	commands, events, timeout := setup(
-		defaultConfig(),
-		doric.NewWell(1, 1),
-		[][3]int{{1, 2, 3}},
-	)
-
-	commands <- doric.CommandLeft
-
-	select {
-	case ev := <-events:
-		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.X == 0 {
-			break
-		}
-		t.Errorf("Current column must not move left as it clashes with well's left border")
-	case <-timeout:
-		t.Errorf("Test timed out")
+	tests := []struct {
+		name           string
+		command        int
+		expectedUpdate doric.EventUpdated
+	}{
+		{
+			name:    "Must clash with left bound when moving left",
+			command: doric.CommandLeft,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       0,
+					Y:       0,
+				},
+			},
+		},
+		{
+			name:    "Must clash with right bound when moving right",
+			command: doric.CommandRight,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       0,
+					Y:       0,
+				},
+			},
+		},
+		{
+			name:    "Must clash with bottom bound when moving down",
+			command: doric.CommandDown,
+			expectedUpdate: doric.EventUpdated{
+				Column: doric.Column{
+					Tileset: [3]int{1, 2, 3},
+					X:       0,
+					Y:       0,
+				},
+			},
+		},
 	}
 
-	commands <- doric.CommandRight
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			commands, events, timeout := setup(
+				defaultConfig(),
+				doric.NewWell(1, 1),
+				[][3]int{{1, 2, 3}},
+			)
+			commands <- test.command
 
-	select {
-	case ev := <-events:
-		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.X == 0 {
-			break
-		}
-		t.Errorf("Current column must not move right as it clashes with well's right border")
-	case <-timeout:
-		t.Errorf("Test timed out")
-	}
-
-	commands <- doric.CommandDown
-
-	select {
-	case ev := <-events:
-		if upd, ok := ev.(doric.EventUpdated); ok && upd.Column.Y == 0 {
-			break
-		}
-		t.Errorf("Current column must not move down as it clashes with well's bottom")
-	case <-timeout:
-		t.Errorf("Test timed out")
+			select {
+			case ev := <-events:
+				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.expectedUpdate) {
+					break
+				}
+				t.Errorf("Current column must not move as it would clash with well's borders")
+			case <-timeout:
+				t.Errorf("Test timed out")
+			}
+		})
 	}
 }
 
