@@ -18,11 +18,11 @@ func Example() {
 	well := doric.NewWell(doric.StandardWidth, doric.StandardHeight)
 	factory := func(n int) [3]int {
 		source := rand.NewSource(time.Now().UnixNano())
-		rand.New(source)
+		r := rand.New(source)
 		return [3]int{
-			rand.Intn(n) + 1,
-			rand.Intn(n) + 1,
-			rand.Intn(n) + 1,
+			r.Intn(n) + 1,
+			r.Intn(n) + 1,
+			r.Intn(n) + 1,
 		}
 	}
 
