@@ -26,9 +26,9 @@ const (
 // Possible returned errors
 const (
 	ErrorNegativeNumberTilesForNextLevel = "NumberTilesForNextLevel can not be less than 0"
-	ErrorNegativeInitialSpeed            = "InitialSpeed can not be less than 0"
+	ErrorLessEqualZeroInitialSpeed       = "InitialSpeed can not be less or equal than 0"
 	ErrorNegativeSpeedIncrement          = "SpeedIncrement can not be less than 0"
-	ErrorNegativeMaxSpeed                = "MaxSpeed can not be less than 0"
+	ErrorLessEqualZeroMaxSpeed           = "MaxSpeed can not be less or equal than 0"
 )
 
 const nanosecond = 1000000000
@@ -131,14 +131,14 @@ func validateConfig(cfg Config) error {
 	if cfg.NumberTilesForNextLevel < 0 {
 		return fmt.Errorf(ErrorNegativeNumberTilesForNextLevel)
 	}
-	if cfg.InitialSpeed < 0 {
-		return fmt.Errorf(ErrorNegativeInitialSpeed)
+	if cfg.InitialSpeed <= 0 {
+		return fmt.Errorf(ErrorLessEqualZeroInitialSpeed)
 	}
-	if cfg.SpeedIncrement < 0 {
+	if cfg.SpeedIncrement <= 0 {
 		return fmt.Errorf(ErrorNegativeSpeedIncrement)
 	}
-	if cfg.MaxSpeed < 0 {
-		return fmt.Errorf(ErrorNegativeMaxSpeed)
+	if cfg.MaxSpeed <= 0 {
+		return fmt.Errorf(ErrorLessEqualZeroMaxSpeed)
 	}
 	return nil
 }

@@ -73,18 +73,18 @@ func TestConfig(t *testing.T) {
 			expectedError: doric.ErrorNegativeSpeedIncrement,
 		},
 		{
-			name: "Must return error if InitialSpeed < 0",
+			name: "Must return error if InitialSpeed <= 0",
 			cfg: doric.Config{
-				InitialSpeed: -1,
+				InitialSpeed: 0,
 			},
-			expectedError: doric.ErrorNegativeInitialSpeed,
+			expectedError: doric.ErrorLessEqualZeroInitialSpeed,
 		},
 		{
-			name: "Must return error if MaxSpeed < 0",
+			name: "Must return error if MaxSpeed <= 0",
 			cfg: doric.Config{
-				MaxSpeed: -1,
+				MaxSpeed: 0,
 			},
-			expectedError: doric.ErrorNegativeMaxSpeed,
+			expectedError: doric.ErrorLessEqualZeroMaxSpeed,
 		},
 	}
 
