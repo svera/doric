@@ -54,7 +54,10 @@ func startGameLogic(commands chan int) []tl.Drawable {
 			r.Intn(n) + 1,
 		}
 	}
-	events := doric.Play(well, factory, cfg, commands)
+	events, err := doric.Play(well, factory, cfg, commands)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	firstUpdate := <-events
 	cur := firstUpdate.(doric.EventRenewed).Column

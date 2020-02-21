@@ -34,13 +34,16 @@ func defaultConfig() doric.Config {
 	}
 }
 
-func setup(cfg doric.Config, well doric.Well, ts [][3]int) (chan<- int, <-chan interface{}, <-chan time.Time) {
+func setup(t *testing.T, cfg doric.Config, well doric.Well, ts [][3]int) (chan<- int, <-chan interface{}, <-chan time.Time) {
 	timeout := time.After(1 * time.Second)
 	factory := &mockTilesetBuilder{
 		Tilesets: ts,
 	}
 	commands := make(chan int)
-	events := doric.Play(well, factory.build, cfg, commands)
+	events, err := doric.Play(well, factory.build, cfg, commands)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
 
 	// First event received is just before game logic loop begins
 	// the actual test will happen after that
@@ -49,10 +52,66 @@ func setup(cfg doric.Config, well doric.Well, ts [][3]int) (chan<- int, <-chan i
 	return commands, events, timeout
 }
 
+func TestConfig(t *testing.T) {
+	tests := []struct {
+		name          string
+		cfg           doric.Config
+		expectedError string
+	}{
+		{
+			name: "Must return error if NumberTilesForNextLevel < 0",
+			cfg: doric.Config{
+				NumberTilesForNextLevel: -1,
+			},
+			expectedError: doric.ErrorNegativeNumberTilesForNextLevel,
+		},
+		{
+			name: "Must return error if SpeedIncrement < 0",
+			cfg: doric.Config{
+				SpeedIncrement: -1,
+			},
+			expectedError: doric.ErrorNegativeSpeedIncrement,
+		},
+		{
+			name: "Must return error if InitialSpeed < 0",
+			cfg: doric.Config{
+				InitialSpeed: -1,
+			},
+			expectedError: doric.ErrorNegativeInitialSpeed,
+		},
+		{
+			name: "Must return error if MaxSpeed < 0",
+			cfg: doric.Config{
+				MaxSpeed: -1,
+			},
+			expectedError: doric.ErrorNegativeMaxSpeed,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			well := doric.NewWell(doric.StandardWidth, doric.StandardHeight)
+			commands := make(chan int)
+			factory := &mockTilesetBuilder{
+				Tilesets: [][3]int{{1, 2, 3}},
+			}
+
+			_, err := doric.Play(well, factory.build, test.cfg, commands)
+			if err == nil {
+				t.Fatalf("Expected error")
+			}
+			if err.Error() != test.expectedError {
+				t.Errorf("Expected error %s but got %s", test.expectedError, err.Error())
+			}
+		})
+	}
+}
+
 func TestGameOver(t *testing.T) {
 	well := doric.NewWell(doric.StandardWidth, 1)
 	well[3][0] = 1
 	_, events, timeout := setup(
+		t,
 		defaultConfig(),
 		well,
 		[][3]int{{1, 1, 1}},
@@ -72,6 +131,7 @@ func TestGameOver(t *testing.T) {
 
 func TestQuit(t *testing.T) {
 	commands, events, timeout := setup(
+		t,
 		defaultConfig(),
 		doric.NewWell(doric.StandardWidth, doric.StandardHeight),
 		[][3]int{{1, 2, 3}},
@@ -92,14 +152,14 @@ func TestQuit(t *testing.T) {
 
 func TestPause(t *testing.T) {
 	tests := []struct {
-		Name           string
-		Command        int
-		ExpectedUpdate doric.EventUpdated
+		name           string
+		command        int
+		expectedUpdate doric.EventUpdated
 	}{
 		{
-			Name:    "Must not move left if paused",
-			Command: doric.CommandLeft,
-			ExpectedUpdate: doric.EventUpdated{
+			name:    "Must not move left if paused",
+			command: doric.CommandLeft,
+			expectedUpdate: doric.EventUpdated{
 				Column: doric.Column{
 					Tileset: [3]int{1, 2, 3},
 					X:       3,
@@ -108,9 +168,9 @@ func TestPause(t *testing.T) {
 			},
 		},
 		{
-			Name:    "Must not move right if paused",
-			Command: doric.CommandRight,
-			ExpectedUpdate: doric.EventUpdated{
+			name:    "Must not move right if paused",
+			command: doric.CommandRight,
+			expectedUpdate: doric.EventUpdated{
 				Column: doric.Column{
 					Tileset: [3]int{1, 2, 3},
 					X:       3,
@@ -119,9 +179,9 @@ func TestPause(t *testing.T) {
 			},
 		},
 		{
-			Name:    "Must not move down if paused",
-			Command: doric.CommandDown,
-			ExpectedUpdate: doric.EventUpdated{
+			name:    "Must not move down if paused",
+			command: doric.CommandDown,
+			expectedUpdate: doric.EventUpdated{
 				Column: doric.Column{
 					Tileset: [3]int{1, 2, 3},
 					X:       3,
@@ -130,9 +190,9 @@ func TestPause(t *testing.T) {
 			},
 		},
 		{
-			Name:    "Must not rotate if paused",
-			Command: doric.CommandRotate,
-			ExpectedUpdate: doric.EventUpdated{
+			name:    "Must not rotate if paused",
+			command: doric.CommandRotate,
+			expectedUpdate: doric.EventUpdated{
 				Column: doric.Column{
 					Tileset: [3]int{1, 2, 3},
 					X:       3,
@@ -143,19 +203,20 @@ func TestPause(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
+		t.Run(test.name, func(t *testing.T) {
 			commands, events, timeout := setup(
+				t,
 				defaultConfig(),
 				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
 				[][3]int{{1, 2, 3}},
 			)
 
 			commands <- doric.CommandPauseSwitch
-			commands <- test.Command
+			commands <- test.command
 
 			select {
 			case ev := <-events:
-				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.ExpectedUpdate) {
+				if upd, ok := ev.(doric.EventUpdated); ok && reflect.DeepEqual(upd, test.expectedUpdate) {
 					break
 				}
 				t.Errorf("Current column must not move or rotate if game is paused")
@@ -222,6 +283,7 @@ func TestWait(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			commands, events, timeout := setup(
+				t,
 				defaultConfig(),
 				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
 				[][3]int{{1, 2, 3}},
@@ -299,6 +361,7 @@ func TestCommands(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			commands, events, timeout := setup(
+				t,
 				defaultConfig(),
 				doric.NewWell(doric.StandardWidth, doric.StandardHeight),
 				[][3]int{{1, 2, 3}},
@@ -363,6 +426,7 @@ func TestWellBounds(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			commands, events, timeout := setup(
+				t,
 				defaultConfig(),
 				doric.NewWell(1, 1),
 				[][3]int{{1, 2, 3}},
@@ -481,6 +545,7 @@ func TestScored(t *testing.T) {
 			cfg.MaxSpeed = 40
 			cfg.NumberTilesForNextLevel = test.numberTilesForNextLevel
 			_, events, timeout := setup(
+				t,
 				cfg,
 				test.well,
 				test.tilesets,
@@ -565,6 +630,7 @@ func TestScoredCombo(t *testing.T) {
 			cfg.InitialSpeed = 20
 			cfg.NumberTilesForNextLevel = test.numberTilesForNextLevel
 			_, events, timeout := setup(
+				t,
 				cfg,
 				test.well,
 				test.tilesets,

@@ -1,6 +1,7 @@
 package doric
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -20,6 +21,14 @@ const (
 	CommandWaitSwitch
 	// Quit game
 	CommandQuit
+)
+
+// Possible returned errors
+const (
+	ErrorNegativeNumberTilesForNextLevel = "NumberTilesForNextLevel can not be less than 0"
+	ErrorNegativeInitialSpeed            = "InitialSpeed can not be less than 0"
+	ErrorNegativeSpeedIncrement          = "SpeedIncrement can not be less than 0"
+	ErrorNegativeMaxSpeed                = "MaxSpeed can not be less than 0"
 )
 
 const nanosecond = 1000000000
@@ -57,8 +66,11 @@ type game struct {
 // channel.
 // Game ends when no more new columns can enter the well, and this will be signaled with the closing of the
 // events channel.
-func Play(p Well, builder TilesetBuilder, cfg Config, commands <-chan int) <-chan interface{} {
-	game := newGame(p, builder, cfg)
+func Play(p Well, builder TilesetBuilder, cfg Config, commands <-chan int) (<-chan interface{}, error) {
+	game, err := newGame(p, builder, cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	go func() {
 		defer func() {
@@ -94,10 +106,14 @@ func Play(p Well, builder TilesetBuilder, cfg Config, commands <-chan int) <-cha
 		}
 	}()
 
-	return game.events
+	return game.events, nil
 }
 
-func newGame(p Well, build TilesetBuilder, cfg Config) *game {
+func newGame(p Well, build TilesetBuilder, cfg Config) (*game, error) {
+	if err := validateConfig(cfg); err != nil {
+		return nil, err
+	}
+
 	return &game{
 		well:        p.copy(),
 		column:      &Column{Tileset: [3]int{}},
@@ -108,7 +124,23 @@ func newGame(p Well, build TilesetBuilder, cfg Config) *game {
 		speed:       cfg.InitialSpeed,
 		ticker:      time.NewTicker(time.Duration(nanosecond / cfg.InitialSpeed)),
 		build:       build,
+	}, nil
+}
+
+func validateConfig(cfg Config) error {
+	if cfg.NumberTilesForNextLevel < 0 {
+		return fmt.Errorf(ErrorNegativeNumberTilesForNextLevel)
 	}
+	if cfg.InitialSpeed < 0 {
+		return fmt.Errorf(ErrorNegativeInitialSpeed)
+	}
+	if cfg.SpeedIncrement < 0 {
+		return fmt.Errorf(ErrorNegativeSpeedIncrement)
+	}
+	if cfg.MaxSpeed < 0 {
+		return fmt.Errorf(ErrorNegativeMaxSpeed)
+	}
+	return nil
 }
 
 func (g *game) execute(comm int) {

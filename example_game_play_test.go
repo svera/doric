@@ -27,7 +27,10 @@ func Example() {
 	}
 
 	// Start the game and return game events in the events channel
-	events := doric.Play(well, factory, cfg, command)
+	events, err := doric.Play(well, factory, cfg, command)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	defer func() {
 		close(command)
