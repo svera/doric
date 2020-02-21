@@ -23,11 +23,11 @@ type coords struct {
 type Well [][]int
 
 // NewWell return a new empty Well instance
-func NewWell(cols, rows int) Well {
+func NewWell(width, height int) Well {
 	var p Well
-	p = make([][]int, cols)
+	p = make([][]int, width)
 	for i := range p {
-		p[i] = make([]int, rows)
+		p[i] = make([]int, height)
 	}
 	return p
 }
