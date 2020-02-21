@@ -134,7 +134,7 @@ func validateConfig(cfg Config) error {
 	if cfg.InitialSpeed <= 0 {
 		return fmt.Errorf(ErrorLessEqualZeroInitialSpeed)
 	}
-	if cfg.SpeedIncrement <= 0 {
+	if cfg.SpeedIncrement < 0 {
 		return fmt.Errorf(ErrorNegativeSpeedIncrement)
 	}
 	if cfg.MaxSpeed <= 0 {

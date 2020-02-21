@@ -62,27 +62,39 @@ func TestConfig(t *testing.T) {
 			name: "Must return error if NumberTilesForNextLevel < 0",
 			cfg: doric.Config{
 				NumberTilesForNextLevel: -1,
+				InitialSpeed:            1,
+				SpeedIncrement:          1,
+				MaxSpeed:                10,
 			},
 			expectedError: doric.ErrorNegativeNumberTilesForNextLevel,
 		},
 		{
 			name: "Must return error if SpeedIncrement < 0",
 			cfg: doric.Config{
-				SpeedIncrement: -1,
+				NumberTilesForNextLevel: 10,
+				InitialSpeed:            1,
+				SpeedIncrement:          -1,
+				MaxSpeed:                10,
 			},
 			expectedError: doric.ErrorNegativeSpeedIncrement,
 		},
 		{
 			name: "Must return error if InitialSpeed <= 0",
 			cfg: doric.Config{
-				InitialSpeed: 0,
+				NumberTilesForNextLevel: 10,
+				InitialSpeed:            0,
+				SpeedIncrement:          1,
+				MaxSpeed:                10,
 			},
 			expectedError: doric.ErrorLessEqualZeroInitialSpeed,
 		},
 		{
 			name: "Must return error if MaxSpeed <= 0",
 			cfg: doric.Config{
-				MaxSpeed: 0,
+				NumberTilesForNextLevel: 10,
+				InitialSpeed:            1,
+				SpeedIncrement:          1,
+				MaxSpeed:                0,
 			},
 			expectedError: doric.ErrorLessEqualZeroMaxSpeed,
 		},
