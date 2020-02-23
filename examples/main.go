@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -56,7 +57,7 @@ func startGameLogic(commands chan int) []tl.Drawable {
 	}
 	events, err := doric.Play(well, factory, cfg, commands)
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf("%s\n", err.Error())
 	}
 
 	firstUpdate := <-events

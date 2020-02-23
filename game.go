@@ -25,10 +25,10 @@ const (
 
 // Possible returned errors
 const (
-	ErrorNegativeNumberTilesForNextLevel = "NumberTilesForNextLevel can not be less than 0"
-	ErrorLessEqualZeroInitialSpeed       = "InitialSpeed can not be less or equal than 0"
-	ErrorNegativeSpeedIncrement          = "SpeedIncrement can not be less than 0"
-	ErrorLessEqualZeroMaxSpeed           = "MaxSpeed can not be less or equal than 0"
+	errorNegativeNumberTilesForNextLevel = "NumberTilesForNextLevel must be equal or greater than 0"
+	errorLessEqualZeroInitialSpeed       = "InitialSpeed must be greater than 0"
+	errorNegativeSpeedIncrement          = "SpeedIncrement must be equal or greater than 0"
+	errorLessEqualZeroMaxSpeed           = "MaxSpeed must be greater than 0"
 )
 
 const nanosecond = 1000000000
@@ -36,12 +36,16 @@ const nanosecond = 1000000000
 // Config holds different parameters related with the game
 type Config struct {
 	// How many tiles a player has to destroy to advance to the next level
+	// Must be equal or greater than zero.
 	NumberTilesForNextLevel int
-	// InitialSpeed is the falling speed at the beginning of the game in cells/second
+	// InitialSpeed is the falling speed at the beginning of the game in cells/second.
+	// Must be greater than zero.
 	InitialSpeed float64
 	// SpeedIncrement is how much the speed increases each level in cells/second
+	// Must be equal or greater than zero.
 	SpeedIncrement float64
 	// MaxSpeed is the maximum speed falling columns can reach
+	// Must be greater than zero.
 	MaxSpeed float64
 }
 
@@ -129,16 +133,16 @@ func newGame(p Well, build TilesetBuilder, cfg Config) (*game, error) {
 
 func validateConfig(cfg Config) error {
 	if cfg.NumberTilesForNextLevel < 0 {
-		return fmt.Errorf(ErrorNegativeNumberTilesForNextLevel)
+		return fmt.Errorf(errorNegativeNumberTilesForNextLevel)
 	}
 	if cfg.InitialSpeed <= 0 {
-		return fmt.Errorf(ErrorLessEqualZeroInitialSpeed)
+		return fmt.Errorf(errorLessEqualZeroInitialSpeed)
 	}
 	if cfg.SpeedIncrement < 0 {
-		return fmt.Errorf(ErrorNegativeSpeedIncrement)
+		return fmt.Errorf(errorNegativeSpeedIncrement)
 	}
 	if cfg.MaxSpeed <= 0 {
-		return fmt.Errorf(ErrorLessEqualZeroMaxSpeed)
+		return fmt.Errorf(errorLessEqualZeroMaxSpeed)
 	}
 	return nil
 }

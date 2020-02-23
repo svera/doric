@@ -1,6 +1,7 @@
 package doric_test
 
 import (
+	"log"
 	"math/rand"
 	"time"
 
@@ -29,7 +30,7 @@ func Example() {
 	// Start the game and return game events in the events channel
 	events, err := doric.Play(well, factory, cfg, command)
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf("%s\n", err.Error())
 	}
 
 	defer func() {

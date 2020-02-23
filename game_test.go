@@ -52,11 +52,10 @@ func setup(t *testing.T, cfg doric.Config, well doric.Well, ts [][3]int) (chan<-
 	return commands, events, timeout
 }
 
-func TestConfig(t *testing.T) {
+func TestConfigValidations(t *testing.T) {
 	tests := []struct {
-		name          string
-		cfg           doric.Config
-		expectedError string
+		name string
+		cfg  doric.Config
 	}{
 		{
 			name: "Must return error if NumberTilesForNextLevel < 0",
@@ -66,7 +65,6 @@ func TestConfig(t *testing.T) {
 				SpeedIncrement:          1,
 				MaxSpeed:                10,
 			},
-			expectedError: doric.ErrorNegativeNumberTilesForNextLevel,
 		},
 		{
 			name: "Must return error if SpeedIncrement < 0",
@@ -76,7 +74,6 @@ func TestConfig(t *testing.T) {
 				SpeedIncrement:          -1,
 				MaxSpeed:                10,
 			},
-			expectedError: doric.ErrorNegativeSpeedIncrement,
 		},
 		{
 			name: "Must return error if InitialSpeed <= 0",
@@ -86,7 +83,6 @@ func TestConfig(t *testing.T) {
 				SpeedIncrement:          1,
 				MaxSpeed:                10,
 			},
-			expectedError: doric.ErrorLessEqualZeroInitialSpeed,
 		},
 		{
 			name: "Must return error if MaxSpeed <= 0",
@@ -96,7 +92,6 @@ func TestConfig(t *testing.T) {
 				SpeedIncrement:          1,
 				MaxSpeed:                0,
 			},
-			expectedError: doric.ErrorLessEqualZeroMaxSpeed,
 		},
 	}
 
@@ -110,10 +105,7 @@ func TestConfig(t *testing.T) {
 
 			_, err := doric.Play(well, factory.build, test.cfg, commands)
 			if err == nil {
-				t.Fatalf("Expected error")
-			}
-			if err.Error() != test.expectedError {
-				t.Errorf("Expected error %s but got %s", test.expectedError, err.Error())
+				t.Fatalf("Expected error when passing a wrong configuration")
 			}
 		})
 	}
